@@ -12,6 +12,9 @@ class WP_Swift_Form_Builder_Plugin {
     private $post_id = null;
     private $css_framework = "zurb_foundation";
     private $show_mail_receipt = false;
+    private $form_pristine = true;
+    private $error_count = 0;
+    private $clear_after_submission = false;
     /*
      * Initializes the plugin.
      */
@@ -19,9 +22,32 @@ class WP_Swift_Form_Builder_Plugin {
         add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
     }
 
+    /*
+     * Get form_pristine
+     */
+    public function get_form_pristine() {
+        return $this->form_pristine;
+    }
+    /*
+     * Set form_pristine
+     */
+    public function set_form_pristine($form_pristine) {
+        $this->form_pristine = $form_pristine;
+    }
 
+    /*
+     * Get error_count
+     */
+    public function get_error_count() {
+        return $this->error_count;//form_num_error_found
+    }
+    /*
+     * Increase error_count
+     */
+    public function increase_error_count() {
+        $this->error_count++;
+    }
 
- 
     public function enqueue_javascript () {
         wp_enqueue_script( $handle='wp-swift-form-builder', $src=plugins_url( '/assets/javascript/wp-swift-form-builder.js', __FILE__ ), $deps=null, $ver=null, $in_footer=true );
     }
@@ -46,6 +72,7 @@ public function set_form_data($form_inputs="form_inputs", $post_id, $args=false,
         // $this->post_id = $post_id;
         $this->form_settings["form_pristine"] = true;
         $this->form_settings["form_num_error_found"] = 0;
+        $this->error_count = 0;
         $this->form_settings["enctype"] = "";
         $this->form_settings["form_class"] = "";
         $this->form_settings["option"]=$option;
@@ -198,6 +225,25 @@ else if (is_string($form_inputs)) {
 
 public function acf_build_form() {
 ?>
+    <?php if (!$this->form_pristine && $this->error_count>0): ?>
+        <div class="callout alert">
+            <h3>Errors Found</h3>
+            <p>We're sorry, there has been an error with the form input.<br>Please rectify the <?php echo $this->error_count ?> errors below and resubmit.</p>
+            <ul><?php 
+            foreach ($this->form_settings["form_data"] as $key => $data) {
+                if (!$data["passed"]) {
+                    if ($data["help"]): 
+                    ?>
+                        <li><?php echo $data["help"] ?></li>
+                    <?php else: ?>
+                        <li><?php echo $data["label"] ?> is required</li>
+                    <?php 
+                    endif;
+                }
+             } 
+             ?></ul>
+        </div>
+    <?php endif ?>
     <form method="post" name="<?php echo $this->form_settings["form-name"]; ?>" id="<?php echo $this->form_settings["form-name"]; ?>" class="<?php echo $this->form_settings["form_class"]; ?>"  novalidate<?php echo $this->form_settings["enctype"]; ?>>
         <?php
         $tabIndex = $this->front_end_form_input_loop($this->form_settings["form_data"], $tabIndex=1, $this->form_settings["form_pristine"], $this->form_settings["form_num_error_found"]);// ?>
@@ -235,11 +281,11 @@ public function acf_build_form() {
 public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristine=true, $form_num_error_found=0) {
     $i=0;
 
-    foreach ($form_data as $id => $settings):
+    foreach ($form_data as $id => $data):
         $tabIndex++;
         $i++;
     // $section_open=false;
-        /*if($i!=$settings['section']): ?>
+        /*if($i!=$data['section']): ?>
             <div class="row">
                 <div class="small-12 large-4 columns"></div>
                 <div class="small-12 large-8 columns">
@@ -247,103 +293,105 @@ public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristin
                 </div>
             </div>
             <?php
-            $i=$settings['section'];
+            $i=$data['section'];
         endif;*/
 
-        switch ($settings['type']) {
+        switch ($data['type']) {
             case "section": 
-                echo $this->html_section_open_side_by_side ( $settings['section_header'], $settings['section_content']);
+                // echo $this->html_section_open_side_by_side ( $data['section_header'], $data['section_content']);
                 break; 
             case "section_close": 
-                echo $this->html_section_close_side_by_side ( );
+                // echo $this->html_section_close_side_by_side ( );
                 break;               
             case "text":
             case "url":
             case "email":
             case "number":
             case "username":
-                $this->bldFormInput($id, $settings, $form_pristine, $form_num_error_found, $tabIndex);
+                $this->bld_form_input($id, $data, $tabIndex);
                 break;
             case "textarea":
-                $this->bldFormTextarea($id, $settings, $form_pristine, $form_num_error_found, $tabIndex);
+                $this->bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
                 break; 
             case "select":
-                $this->bldFormSelect($id, $settings, $form_pristine, $form_num_error_found, $tabIndex, '');
+                $this->bldFormSelect($id, $data, $form_pristine, $form_num_error_found, $tabIndex, '');
                 break;
             case "select2":
-                $this->bldFormSelect2($id, $settings, $form_pristine, $form_num_error_found, $tabIndex);
+                $this->bldFormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
             case "multi_select":
-                $this->bldFormSelect2($id, $settings, $form_pristine, $form_num_error_found, $tabIndex);
-                // $this->bldFormSelect($id, $settings, $form_pristine, $form_num_error_found, $tabIndex, 'multiple');   
+                $this->bldFormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
+                // $this->bldFormSelect($id, $data, $form_pristine, $form_num_error_found, $tabIndex, 'multiple');   
                 break; 
             case "file":
-                $this->bldFormFileUpload($id, $settings, $form_pristine, $form_num_error_found, $tabIndex);
+                $this->bldFormFileUpload($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
                 break; 
             case "date_range":
-                bldFormDateRange($id, $settings, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
+                bldFormDateRange($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
                 break;    
             case "password_combo":
-                $tabIndex = bldFormPasswordCombo($id, $settings, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
+                $tabIndex = bldFormPasswordCombo($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
                 break;                                                               
         }           
     endforeach;
     return $tabIndex;    
 }
+/*
+ * Build the HTML before the form input
+ */
+public function before_form_input($id, $data) {
+    $this->form_element_open($id, $data);
+    $this->form_element_anchor($id);
+    $this->form_element_label($id, $data);
+    $this->form_element_form_input_open();
+}
+/*
+ * Build the HTML after the form input
+ */
+public function after_form_input($id, $data) {
+    $this->form_element_help($data);
+    $this->form_element_form_input_close();
+    $this->form_element_close($id, $data);
+}
 
-    public function bldFormInput($id, $data, $form_pristine, $form_num_error_found, $tabIndex=0, $section='') {
+    public function bld_form_input($id, $data, $tabIndex=0, $section='') {
+        // echo "<pre>"; var_dump($data); echo "</pre>";
         $has_error='';
-        if(!$form_pristine) {
-            if(!$form_num_error_found) {
+        if(!$this->form_pristine) {
+            if($this->clear_after_submission && $this->form_num_error_found=0) {
                 // No errors found so clear the values
                 $data['value']=''; 
             }
         }
-        if($section) {
-            $section = ' data-section="'.$section.'"';
-        }
-        else {
-            $section='';
-        }
-
+        // data_type is the same as $data['type'] unless it is an invalid attributes type such as username
         $data_type = $data['type'];
         if ($data['type']=='username') {
             $data['type']='text';
             $data_type = 'username';
         }
-        $this->form_element_open($id, $data, $form_pristine);
-        $this->form_element_anchor($id);
-        $this->form_element_label($id, $data);
-        $this->form_element_form_input_open();
+        $this->before_form_input($id, $data);
         ?><input 
             type="<?php echo $data['type']; ?>" 
             data-type="<?php echo $data_type; ?>" 
-            class="form-builder-control js-form-builder-control" 
+            class="<?php echo $this->get_form_input_class() ?>" 
             id="<?php echo $id; ?>" 
             name="<?php echo $id; ?>" 
-            value="<?php echo $data['value']; ?>" 
-            placeholder="<?php echo $data['placeholder']; ?>" 
-            tabindex=<?php echo $tabIndex; ?> 
-            <?php echo $data['required']; ?>
-            <?php echo $section; ?>
+            tabindex="<?php echo $tabIndex; ?>" 
+            <?php if ( isset($data["value"])): ?> value="<?php echo $data['value'] ?>" <?php endif ?>
+            <?php if ( isset($data["placeholder"])): ?> placeholder="<?php echo $data['placeholder'] ?>" <?php endif ?>
+            <?php if ( isset($data["section"])): ?> data-section="<?php echo $data["section"] ?>" <?php endif ?>
+            <?php echo $data['required']; ?>   
         ><?php 
-        $this->form_element_help($data);
-        $this->form_element_form_input_close();
-        $this->form_element_close($id, $data);
+        $this->after_form_input($id, $data);
     }  
 
-private function form_element_open($id, $data, $form_pristine) {
+private function form_element_open($id, $data) {
         $has_error='';
-        if(!$form_pristine) {
-            if(!$form_num_error_found) {
-                // No errors found so clear the values
-                $data['value']=''; 
-            }
-        }
 
-        if(!$form_pristine && $data['passed']==false) {
+        if(!$this->form_pristine && $data['passed']==false) {
             // This input has has error detected so add an error class to the surrounding div
             $has_error = 'has-error';
         }
+        // $has_error = 'has-error';
     ?><!-- @start form element -->
     <div class="row form-group form-builder <?php echo $has_error; ?>" 
     id="<?php echo $id; ?>-form-group"><?php 
@@ -390,6 +438,13 @@ private function get_form_input_div_class() {
     else {
         return "";
     }
+}
+
+/*
+ * Get the CSS class for the input
+ */
+private function get_form_input_class() {
+    return "form-builder-control js-form-builder-control";
 }
 /*
  * Set the CSS framework
@@ -627,6 +682,70 @@ private function process_form($form_settings, $post) {
 }
 
 
+
+ public function check_input($key, $value){
+    $this->form_settings["form_data"][$key]['value'] = $value;
+    $this->form_settings["form_data"][$key]['value'] = $value;
+    if($this->form_settings["form_data"][$key]['required'] && $this->form_settings["form_data"][$key]['value']=='') {
+        $this->increase_error_count();
+        return;
+    }
+    else if(!$this->form_settings["form_data"][$key]['required'] && $this->form_settings["form_data"][$key]['value']=='') {
+        $this->form_settings["form_data"][$key]['clean'] = $this->form_settings["form_data"][$key]['value'];
+        $this->form_settings["form_data"][$key]['passed'] = true;
+        return;
+    }
+
+    if(!is_array($this->form_settings["form_data"][$key]['value'])) {
+        $this->form_settings["form_data"][$key]['value'] = trim($this->form_settings["form_data"][$key]['value']);
+        // $this->form_settings["form_data"][$key]['value'] = stripslashes($this->form_settings["form_data"][$key]['value']);
+        // $this->form_settings["form_data"][$key]['value'] = htmlspecialchars($this->form_settings["form_data"][$key]['value']);       
+    }
+
+    switch ($this->form_settings["form_data"][$key]['type']) {
+        case "text":
+            $this->form_settings["form_data"][$key]['clean'] = sanitize_text_field( $this->form_settings["form_data"][$key]['value'] );
+            break;
+        case "username":
+            $username_strlen = strlen ( $this->form_settings["form_data"][$key]['value']  );
+            if ($username_strlen<4 || $username_strlen>30) {
+                $this->increase_error_count();
+                return $this->form_settings["form_data"][$key];
+            }
+            $this->form_settings["form_data"][$key]['clean'] = sanitize_user( $this->form_settings["form_data"][$key]['value'], $strict=true ); 
+            break;
+        case "email":
+            if ( !is_email( $this->form_settings["form_data"][$key]['value'] ) ) { 
+                $this->increase_error_count();
+                return $this->form_settings["form_data"][$key]; 
+            }
+            else {
+                $this->form_settings["form_data"][$key]['clean'] = sanitize_email( $this->form_settings["form_data"][$key]['value'] );  
+            }
+            break;
+        case "url":
+            if (filter_var($this->form_settings["form_data"][$key]['value'], FILTER_VALIDATE_URL) === false) {
+                $this->increase_error_count();
+                return $this->form_settings["form_data"][$key];
+            }
+            else {
+                $this->form_settings["form_data"][$key]['clean'] = $this->form_settings["form_data"][$key]['value'];
+            }
+            break;
+        case "select2":
+        case "select":
+            $this->form_settings["form_data"][$key]['selected_option'] = $value;
+            break;
+        case "file":     
+            break;                              
+        default:;
+    }
+    // esc_attr() - Escaping for HTML attributes. Encodes the <, >, &, ” and ‘ (less than, greater than, ampersand, double quote and single quote) characters. Will never double encode entities.
+    // $this->form_settings["form_data"][$key]['clean'] =  esc_attr($this->form_settings["form_data"][$key]['value']);
+    $this->form_settings["form_data"][$key]['passed'] = true;
+    // return $data;
+    return;
+}
 }
 // Initialize the plugin
 $form_builder_plugin = new WP_Swift_Form_Builder_Plugin();
