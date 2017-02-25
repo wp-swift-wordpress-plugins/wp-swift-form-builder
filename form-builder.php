@@ -14,14 +14,37 @@ class WP_Swift_Form_Builder_Plugin {
     private $show_mail_receipt = false;
     private $form_pristine = true;
     private $error_count = 0;
-    private $clear_after_submission = false;
+    private $clear_after_submission = true;
+    private $Section_Layout_Addon = null;
+    private $default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
     /*
      * Initializes the plugin.
      */
-    public function __construct() {
+    public function __construct($attributes=false, $form_data=false, $post_id=false, $form_builder_args=false, $option=false) { //"option") {
+        $this->set_form_data($form_data,  $post_id, $form_builder_args, $attributes, $option);
         add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
+
+        if (isset($attributes["section-layout"])) {
+            $section_layout_string = $attributes["section-layout"];
+            if ( class_exists($section_layout_string) ) {
+                $this->Section_Layout_Addon = new $section_layout_string();
+            }
+        }
     }
 
+    public function validate_form($input_keys_to_skip=array()) {
+        $this->default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
+        $this->default_input_keys_to_skip = array_merge($this->default_input_keys_to_skip, $input_keys_to_skip);
+
+        // The form is submitted by a user and so is no longer pristine
+        $this->set_form_pristine(false);
+        //Loop through the POST and validate. Store the values in $form_data
+        foreach ($_POST as $key => $value) {
+            if (!in_array($key, $this->default_input_keys_to_skip)) { //Skip the button,  mail-receipt checkbox, g-recaptcha-response etc
+                $this->check_input($key, $value);//Validate input    
+            }
+        }
+    }
     /*
      * Get form_pristine
      */
@@ -51,23 +74,8 @@ class WP_Swift_Form_Builder_Plugin {
     public function enqueue_javascript () {
         wp_enqueue_script( $handle='wp-swift-form-builder', $src=plugins_url( '/assets/javascript/wp-swift-form-builder.js', __FILE__ ), $deps=null, $ver=null, $in_footer=true );
     }
-    /*
-     * Add the css file
-     */
-    public function lorem() {
-        return "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Autem amet temporibus qui optio unde, deleniti ipsum. Nulla amet explicabo veniam repudiandae eveniet iure laborum quam distinctio facilis, ea reiciendis animi!";
-    }
-    public function add($i, $j) {
-        if (is_integer($i) && is_integer($j)) {
-            return $i + $j;
-            # code...
-        }
-        else {
-            return 'NAN';
-        }
-    }
 
-public function set_form_data($form_inputs="form_inputs", $post_id, $args=false, $option=false) {
+public function set_form_data($form_inputs="form_inputs", $post_id, $args=false, $attributes= false, $option=false) {
         $this->form_settings = array();
         // $this->post_id = $post_id;
         $this->form_settings["form_pristine"] = true;
@@ -225,10 +233,10 @@ else if (is_string($form_inputs)) {
 
 public function acf_build_form() {
 ?>
-    <?php if (!$this->form_pristine && $this->error_count>0): ?>
+    <?php if ($this->error_count>0): ?>
         <div class="callout alert">
             <h3>Errors Found</h3>
-            <p>We're sorry, there has been an error with the form input.<br>Please rectify the <?php echo $this->error_count ?> errors below and resubmit.</p>
+            <p>We're sorry, there has been an error with the form input. Please rectify the <?php echo $this->error_count ?> errors below and resubmit.</p>
             <ul><?php 
             foreach ($this->form_settings["form_data"] as $key => $data) {
                 if (!$data["passed"]) {
@@ -298,10 +306,20 @@ public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristin
 
         switch ($data['type']) {
             case "section": 
-                // echo $this->html_section_open_side_by_side ( $data['section_header'], $data['section_content']);
+                if ($this->Section_Layout_Addon) {
+                    $this->Section_Layout_Addon->section_open($data['section_header'], $data['section_content']);
+                }
+                else {
+                    $this->section_open($data['section_header'], $data['section_content']);
+                }
                 break; 
-            case "section_close": 
-                // echo $this->html_section_close_side_by_side ( );
+            case "section_close":
+                if ($this->Section_Layout_Addon) {
+                    $this->Section_Layout_Addon->section_close();
+                }
+                else {
+                    $this->section_close();
+                } 
                 break;               
             case "text":
             case "url":
@@ -356,8 +374,11 @@ public function after_form_input($id, $data) {
     public function bld_form_input($id, $data, $tabIndex=0, $section='') {
         // echo "<pre>"; var_dump($data); echo "</pre>";
         $has_error='';
+        // echo "<pre>this->form_pristine: "; var_dump($this->form_pristine); echo "</pre>";
+        // echo "<pre>this->clear_after_submission "; var_dump($this->clear_after_submission); echo "</pre>";
+        // echo "<pre>this->error_count "; var_dump($this->error_count); echo "</pre>";
         if(!$this->form_pristine) {
-            if($this->clear_after_submission && $this->form_num_error_found=0) {
+            if($this->clear_after_submission && $this->error_count===0) {
                 // No errors found so clear the values
                 $data['value']=''; 
             }
@@ -478,6 +499,21 @@ function bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tab
     <?php 
 }
 
+    public function section_open($section_header, $section_content) {
+        ?>
+        <!-- @start section -->
+        <?php if ($section_header): ?>
+            <h4><?php echo $section_header ?></h4>
+        <?php endif ?>
+        <?php if ($section_content): ?>
+            <p><?php echo $section_content ?></p>
+        <?php endif;    
+    }
+
+    public function section_close() {
+        ?><hr><!-- @end section --><?php       
+    } 
+
     public function html_section_open_side_by_side ($section_header, $section_content) {
         // $html = '<div class="row form-section">'."\n";
         // $html .= '<div class="small-12 medium-6 large-6 columns large-push-6">'."\n";
@@ -531,155 +567,7 @@ public function html_section_close_side_by_side () {
     //     return $form_file;
     // } 
 
-private function process_form($form_settings, $post) {
-    $send_email=false;//Debug variable
-    $form_settings["form_pristine"]=false;
-    
-    # Google recaptcha library
-    // require_once "recaptchalib.php";
-    // # your secret key
-    // $secret = "6LcnawkUAAAAALJRqPuRKjMLBDfBcJDJQB0JD31j";
-    // # empty response
-    // $response = null;
-    // # check secret key
-    // $reCaptcha = new ReCaptcha($secret);
 
-    // if submitted check response
-    // if ($post["g-recaptcha-response"]) {
-    //     $response = $reCaptcha->verifyResponse(
-    //         $_SERVER["REMOTE_ADDR"],
-    //         $post["g-recaptcha-response"]
-    //     );
-    // }
-
-    // if ($response != null && $response->success) {
-        $mail_receipt=false;//auto-reponse flag
-        if(isset($post['mail-receipt'])){
-            $mail_receipt=true;//Send an auto-response to user
-        }
-        // include('_email-template.php');
-   
-        //Loop through the POST and validate. Store the values in $form_data
-        foreach ($post as $key => $value) {
-            if (($key!='submit-request-form') && ($key!='mail-receipt') && ($key!='form-file-upload') && ($key!='g-recaptcha-response')) { //Skip the button and mail-receipt checkbox
-                $form_settings["form_data"][$key] = check_input($form_settings["form_data"][$key], $value);//Validate input    
-                // echo '<pre>';var_dump($form_settings["form_data"][$key]); echo '</pre>';
-            }
-        }
-
-        // Loop through form1_data and increase form1_num_error_found count for each error
-        foreach ($form_settings["form_data"] as $key => $value) {
-            if(!$form_settings["form_data"][$key]['passed']) {
-                //An error has been found in this input so increase the count
-                $form_settings["form_num_error_found"]++;
-            }
-        }
-
-        if($form_settings["form_num_error_found"]) {
-            // Error has been found in user input
-            $form_settings["response_msg"] = "We're sorry, there has been an error with the form input.<br>Please rectify the ".$form_num_error_found." errors below and resubmit.";
-            $form_settings["error_class"] = 'error';
-            // echo "<pre>"; var_dump($form_settings); echo "</pre>";
-        }
-        else {  
-
-            //If a debug email is set in ACF, send the email there instead of the admin email
-            get_field('debug_email', $form_settings["option"]) ? $to = get_field('debug_email', $form_settings["option"]) : $to = get_option('admin_email');
-
-            // Set reponse subject for email (ACF)
-            get_field('response_subject', $form_settings["option"]) ? $response_subject = get_field('response_subject', $form_settings["option"]).$date : $response_subject = "New Enquiry - ".date("Y-m-d H:i:s"). ' GMT';
-
-            // Set reponse message
-            // echo "<pre>".$to."</pre>";
-            // echo "<pre>".$response_subject."</pre>";
- // Set reponse message
-            get_field('response_message') ? $response_message = get_field('response_message').$date : $response_message = '<p>A website user has made the following enquiry.</p>';
-
-            // Set auto_response_message
-            get_field('auto_response_message') ? $auto_response_message = get_field('auto_response_message') : $auto_response_message = 'Thank you very much for your enquiry. A representative will be contacting you shortly.';
-
-            // Set auto_response_message
-            get_field('browser_output_headder') ? $browser_output_headder = get_field('browser_output_headder') : $browser_output_headder = 'Hold Tight, We\'ll Get Back To You';
-
-
-            // Start making the string that will be sent in the email
-            $email_string =$response_message;
-            //Create string that will hold table of users input
-            $table= '<table style="width:100%">';
-            $j=0;
-            foreach ($form_settings["form_data"] as $key => $value) {
-                $required = $value['required'];
-                $type = $value['type'];
-                $table.= '<tr>';
-                $table.= '<th style="width:30%">'.ucwords(str_replace('-', ' ',substr($key, 5))).':</th>';
-
-                if($value['type']=='select') {
-                    $table.= '<td>'.ucwords(str_replace('-', ' ',$value['clean'])).'</td>';
-                }
-                else {
-                    $table.= '<td>'.$value['clean'].'</td>';
-                }                    
-                
-                $table.= '</tr>';
-                $j++;
-            }
-            $table.= '</table>';
-
-            // Add the table of values to the string
-            $email_string .= $table;
-
-            if( get_field('email', 'option') ) {
-                $from_email = get_field('email', 'option');
-            }
-            else {
-                $from_email = get_bloginfo('admin_email');
-            }
-            $from_email = get_bloginfo('admin_email');
-            // $headers = array('From: '.html_entity_decode(get_bloginfo('name')).' <'.$from_email.'>');
-
-            if ($send_email) {
-                $status = wp_mail($to, $response_subject.' - '.date("D j M Y, H:i"). ' GMT',  wrap_email($email_string));
-            }
-
-            // Construct the reponse to show to the user
-            $confirmation_output_wrapper_open = '<div id="contact-thank-you">';                  
-            $confirmation_output_wrapper_open .= '<div class="callout primary" data-closable="slide-out-right">';
-            $confirmation_output = '<h3>'.$browser_output_headder.'</h3>';
-            $confirmation_output .= $auto_response_message;
-            $confirmation_output .= '<p>A copy of your enquiry is shown below.</p>';
-            $confirmation_output .= $table;
-            $confirmation_outputwrapper_close = '<button class="close-button" aria-label="Dismiss alert" type="button" data-close>';
-            $confirmation_outputwrapper_close .= '<span aria-hidden="true">&times;</span>';
-            $confirmation_outputwrapper_close .= '</button>';
-            $confirmation_output_wrapper_close .= '</div></div>';
-            if (!$form_settings["ajax"]) {
-                $confirmation_output = $confirmation_output_wrapper_open.$confirmation_output. $confirmation_outputwrapper_close ;
-            }
-            $form_settings["confirmation_output"] = $confirmation_output;
-
-            //If the user has requested it, send an email acknowledgement
-            if($mail_receipt) {
-                $auto_response_subject='Auto-response (no-reply)';
-                if( get_field('auto_response_subject') ) {
-                    $auto_response_subject = get_field('auto_response_subject');
-                }
-                $user_response_msg = $auto_response_message;
-                $user_response_msg .= '<p>A copy of your enquiry is shown below.</p>';
-                $user_response_msg .= $table;
-                if ($send_email) {
-                    $status = wp_mail($form_settings["form_data"]['form-email']['clean'], $auto_response_subject, wrap_email($user_response_msg));
-                }
-                
-            }              
-
-        }     
-    // } else {
-    //     $form_settings["response_msg"] = "We're sorry, please use the recaptcha.<br>".json_encode($response);
-    //     $form_settings["error_class"] = 'error';
-    // }
-
-    return $form_settings;
-}
 
 
 
@@ -704,6 +592,7 @@ private function process_form($form_settings, $post) {
 
     switch ($this->form_settings["form_data"][$key]['type']) {
         case "text":
+        case "textarea":
             $this->form_settings["form_data"][$key]['clean'] = sanitize_text_field( $this->form_settings["form_data"][$key]['value'] );
             break;
         case "username":
@@ -748,4 +637,4 @@ private function process_form($form_settings, $post) {
 }
 }
 // Initialize the plugin
-$form_builder_plugin = new WP_Swift_Form_Builder_Plugin();
+// $form_builder_plugin = new WP_Swift_Form_Builder_Plugin();
