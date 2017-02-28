@@ -397,8 +397,11 @@ public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristin
             case "textarea":
                 $this->bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
                 break; 
+            case "radio":
+                $this->build_form_radio($id, $data, $tabIndex);
+                break; 
             case "select":
-                $this->bldFormSelect($id, $data, $form_pristine, $form_num_error_found, $tabIndex, '');
+                $this->bldFormSelect($id, $data, $tabIndex, '');
                 break;
             case "select2":
                 $this->bldFormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
@@ -578,6 +581,89 @@ function bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tab
 
 }
 
+
+function bldFormSelect($id, $data, $tabIndex, $multiple) {
+    if(!$this->form_pristine) {
+        if($this->clear_after_submission && $this->error_count===0) {
+            // No errors found so clear the selected value
+            $data['selected_option']=''; 
+        }
+    }
+
+    $this->before_form_input($id, $data);   
+      ?><select class="form-control js-form-control" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex=<?php echo $tabIndex; ?> <?php echo $data['required']; ?> <?php echo $multiple; ?>>
+            <?php if(!$multiple): ?>
+                <option value="">Please select an option...</option>
+            <?php endif; ?>
+            <?php foreach ($data['options'] as $option): ?>
+                <?php if($option['option_value'] == $data['selected_option']){ $selected='selected'; } else { $selected=''; }?>
+                <option value="<?php echo  $option['option_value']; ?>" <?php echo $selected; ?>><?php echo $option['option']; ?></option>
+            <?php endforeach; ?>
+        </select><?php
+    $this->after_form_input($id, $data);
+}
+function build_form_radio($id, $data, $tabIndex) {
+    // echo "<pre>"; var_dump($id); echo "</pre>";
+    // echo "<pre>"; var_dump($data); echo "</pre>";
+    if(!$this->form_pristine) {
+        if($this->clear_after_submission && $this->error_count===0) {
+            // No errors found so clear the selected value
+            $data['selected_option']=''; 
+        }
+    }
+
+    $this->before_form_input($id, $data);
+    $count=0;  
+    $checked='';
+      ?><?php 
+        foreach ($data['options'] as $option): $count++;
+            if ( ($data['selected_option']=='' && $count==1) || ($data['selected_option']==$option['option_value'])){
+                $checked=' checked';
+            }
+            ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $id ?>-radio" type="radio" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
+            <label for="<?php echo $id.'-'.$count ?>"><?php echo $option['option'] ?></label><?php 
+        endforeach; ?><?php
+    $this->after_form_input($id, $data);
+}
+
+
+
+function bld_FormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $multiple) {
+echo "<pre>"; var_dump($data); echo "</pre>";
+    if(!$form_pristine) {
+        if(!$form_num_error_found) {
+            // No errors found so clear the selected option
+            $data['selected_option']=''; 
+        }
+    }
+    if(!$form_pristine && $data['passed']==false) {
+        // This input has has error detected so add an error class to the surrounding div
+        $has_error = 'has-error';
+    }   
+    ?>
+    <div class="row form-group form-builder <?php echo $has_error; ?>" id="<?php echo $id; ?>-form-group">
+        <div class="small-12 medium-3 large-3 columns form-label">
+            <label for="<?php echo $id; ?>" class="control-label <?php echo $data['required']; ?>"><?php echo $data['label']; ?> <span></span></label>
+        </div>
+        <div class="small-12 medium-9 large-9 columns">
+            <select class="form-control js-form-control" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex=<?php echo $tabIndex; ?> <?php echo $data['required']; ?> <?php echo $multiple; ?>>
+                <?php if(!$multiple): ?>
+                    <option value="">Please select an option...</option>
+                <?php endif; ?>
+                <?php foreach ($data['options'] as $option): ?>
+                    <?php if($option['option_value'] == $data['selected_option']){ $selected='selected'; } else { $selected=''; }?>
+                    <option value="<?php echo  $option['option_value']; ?>" <?php echo $selected; ?>><?php echo $option['option']; ?></option>
+                <?php endforeach; ?>
+            </select>
+            <?php $data['help'] ? $help= $data['help'] : $help = $data['label']. ' is required'; ?>
+            <small class="error"><?php echo $help; ?></small>
+            <?php if($multiple): ?>
+                <small>Hold down the control/command button to select multiple options</small>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php 
+}
     public function section_open($section_header, $section_content) {
         ?>
         <!-- @start section -->
