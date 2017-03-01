@@ -57,7 +57,13 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         //Loop through the POST and validate. Store the values in $form_data
         foreach ($_POST as $key => $value) {
             if (!in_array($key, $this->default_input_keys_to_skip)) { //Skip the button,  mail-receipt checkbox, g-recaptcha-response etc
-                $this->check_input($key, $value);//Validate input    
+                $check_if_submit = substr($key, 0, 7);
+                // Get the substring of the key and make sure it is not a submit button
+                if ($check_if_submit!='submit-') {
+
+                    $this->check_input($key, $value);//Validate input    
+                }
+                
             }
         }
     }
@@ -156,10 +162,21 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         else {
               $this->form_settings["submit-button-text"] = "Submit Form";
         }
+        if(isset($args["submit_button_name"])) {
+            $this->form_settings["submit-button-name"] = $args["submit_button_name"];
+        }
+        else {
+            $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
+        }
 
+        if (isset($args["clear_after_submission"])) {
+            // echo "<pre>";var_dump($args["clear_after_submission"]);echo "</pre>";
+            $this->clear_after_submission = $args["clear_after_submission"];
+            // echo "<pre>";var_dump($this->clear_after_submission);echo "</pre>";
+        }
 // $this->form_settings["form-name"] = "request-form";
 // $this->form_settings["submit-button-text"] = "Submit Form";
-$this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
+// $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
 
 
         $this->form_settings["error_class"] = "";
@@ -394,6 +411,9 @@ public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristin
             case "username":
                 $this->bld_form_input($id, $data, $tabIndex);
                 break;
+            case "hidden":
+                $this->bld_form_hidden_input($id, $data);
+                break;
             case "textarea":
                 $this->bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
                 break; 
@@ -461,12 +481,16 @@ public function after_form_input($id, $data) {
             $data_type = 'username';
         }
         $data = $this->before_form_input($id, $data);
+        $name = $id;
+        if (isset($data['id-index'])) {
+            $id .= '-'.$data['id-index'];
+        }
         ?><input 
             type="<?php echo $data['type']; ?>" 
             data-type="<?php echo $data_type; ?>" 
             class="<?php echo $this->get_form_input_class() ?>" 
             id="<?php echo $id; ?>" 
-            name="<?php echo $id; ?>" 
+            name="<?php echo $name; ?>" 
             tabindex="<?php echo $tabIndex; ?>" 
             <?php if ( isset($data["value"])): ?> value="<?php echo $data['value'] ?>" <?php endif ?>
             <?php if ( isset($data["placeholder"])): ?> placeholder="<?php echo $data['placeholder'] ?>" <?php endif ?>
@@ -476,6 +500,47 @@ public function after_form_input($id, $data) {
         $data = $this->after_form_input($id, $data);
     }  
 
+    public function bld_form_hidden_input($id, $data, $tabIndex=0, $section='') {
+        // echo "<pre>"; var_dump($data); echo "</pre>";
+        // $has_error='';
+        // echo "<pre>this->form_pristine: "; var_dump($this->form_pristine); echo "</pre>";
+        // echo "<pre>this->clear_after_submission "; var_dump($this->clear_after_submission); echo "</pre>";
+        // echo "<pre>this->error_count "; var_dump($this->error_count); echo "</pre>";
+        // if(!$this->form_pristine) {
+        //     if($this->clear_after_submission && $this->error_count===0) {
+        //         // No errors found so clear the values
+        //         $data['value']=''; 
+        //     }
+        // }
+        // data_type is the same as $data['type'] unless it is an invalid attributes type such as username
+        // $data_type = $data['type'];
+        // if ($data['type']=='username') {
+        //     $data['type']='text';
+        //     $data_type = 'username';
+        // }
+        // $data = $this->before_form_input($id, $data);
+        if (isset($data['data-type'])) {
+            $data_type = $data['data-type'];
+        }
+        else {
+            $data_type = $data['type'];
+        }
+        $name = $id;
+        if (isset($data['id-index'])) {
+            $id .= '-'.$data['id-index'];
+        }
+        ?><input 
+            type="hidden" 
+            data-type="<?php echo $data_type; ?>" 
+            class="hidden" 
+            id="<?php echo $id; ?>" 
+            name="<?php echo $name; ?>" 
+            value="<?php echo $data['value']; ?>"
+            <?php if ( isset($data["section"])): ?> data-section="<?php echo $data["section"] ?>" <?php endif ?>
+            <?php echo $data['required']; ?>   
+        ><?php 
+        // $data = $this->after_form_input($id, $data);
+    } 
 private function form_element_open($id, $data) {
         $has_error='';
 
@@ -733,74 +798,17 @@ public function html_section_close_side_by_side () {
     // } 
 
 
-
-
-
- public function check_input($key, $value){
-    $this->form_settings["form_data"][$key]['value'] = $value;
-    $this->form_settings["form_data"][$key]['value'] = $value;
-    if($this->form_settings["form_data"][$key]['required'] && $this->form_settings["form_data"][$key]['value']=='') {
-        $this->increase_error_count();
-        return;
+    /*
+     * Check an individual form input field and sets the array with the findings 
+     *
+     * @param $key      an array key that matches the form input name (POST key)
+     * @param $value    the value of the form input
+     *
+     * @return null
+     */
+    public function check_input($key, $value){
+        include('_check-input.php');
     }
-    else if(!$this->form_settings["form_data"][$key]['required'] && $this->form_settings["form_data"][$key]['value']=='') {
-        $this->form_settings["form_data"][$key]['clean'] = $this->form_settings["form_data"][$key]['value'];
-        $this->form_settings["form_data"][$key]['passed'] = true;
-        return;
-    }
-
-    if(!is_array($this->form_settings["form_data"][$key]['value'])) {
-        $this->form_settings["form_data"][$key]['value'] = trim($this->form_settings["form_data"][$key]['value']);
-        // $this->form_settings["form_data"][$key]['value'] = stripslashes($this->form_settings["form_data"][$key]['value']);
-        // $this->form_settings["form_data"][$key]['value'] = htmlspecialchars($this->form_settings["form_data"][$key]['value']);       
-    }
-
-    switch ($this->form_settings["form_data"][$key]['type']) {
-        case "text":
-        case "textarea":
-            $this->form_settings["form_data"][$key]['clean'] = sanitize_text_field( $this->form_settings["form_data"][$key]['value'] );
-            break;
-        case "username":
-            $username_strlen = strlen ( $this->form_settings["form_data"][$key]['value']  );
-            if ($username_strlen<4 || $username_strlen>30) {
-                $this->increase_error_count();
-                return $this->form_settings["form_data"][$key];
-            }
-            $this->form_settings["form_data"][$key]['clean'] = sanitize_user( $this->form_settings["form_data"][$key]['value'], $strict=true ); 
-            break;
-        case "email":
-            if ( !is_email( $this->form_settings["form_data"][$key]['value'] ) ) { 
-                $this->increase_error_count();
-                return $this->form_settings["form_data"][$key]; 
-            }
-            else {
-                $this->form_settings["form_data"][$key]['clean'] = sanitize_email( $this->form_settings["form_data"][$key]['value'] );  
-            }
-            break;
-        case "url":
-            if (filter_var($this->form_settings["form_data"][$key]['value'], FILTER_VALIDATE_URL) === false) {
-                $this->increase_error_count();
-                return $this->form_settings["form_data"][$key];
-            }
-            else {
-                $this->form_settings["form_data"][$key]['clean'] = $this->form_settings["form_data"][$key]['value'];
-            }
-            break;
-        case "select2":
-        case "select":
-            $this->form_settings["form_data"][$key]['selected_option'] = $value;
-            break;
-        case "file":     
-            break;                              
-        default:;
-    }
-    // esc_attr() - Escaping for HTML attributes. Encodes the <, >, &, ” and ‘ (less than, greater than, ampersand, double quote and single quote) characters. Will never double encode entities.
-    // $this->form_settings["form_data"][$key]['clean'] =  esc_attr($this->form_settings["form_data"][$key]['value']);
-    $this->form_settings["form_data"][$key]['passed'] = true;
-    // return $data;
-    return;
-}
-
 
 
 /*
