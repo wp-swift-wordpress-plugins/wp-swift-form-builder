@@ -9,12 +9,14 @@ Text Domain:       wp-swift-form-builder
 */
 
 class WP_Swift_Form_Builder_Plugin {
+    public $action='';
     public $form_settings = null;
     private $post_id = null;
     private $css_framework = "zurb_foundation";
     private $show_mail_receipt = false;
     private $form_pristine = true;
     private $error_count = 0;
+    private $extra_error_msgs = array();
     private $clear_after_submission = true;
     private $Section_Layout_Addon = null;
     private $default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
@@ -93,6 +95,22 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         $this->error_count++;
     }
 
+    /*
+     * Get extra_error_msgs
+     */
+    public function get_extra_error_msgs() {
+        return $this->extra_error_msgs;
+    }
+    /*
+     * Increase extra_error_msgs
+     */
+    public function add_extra_error_msgs($msg) {
+        $this->extra_error_msgs[] = $msg;
+    }
+
+
+
+
     public function enqueue_javascript () {
         $options = get_option( 'wp_swift_form_builder_settings' );
         // echo "<pre>wp-swift-form-builder</pre>";
@@ -117,257 +135,19 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
 
     }
 
+    /*
+     * Set the form data
+     */
     public function set_form_data($form_inputs="form_inputs", $post_id, $args=false, $attributes= false, $option=false) {
-        $this->form_settings = array();
-        // $this->post_id = $post_id;
-        $this->form_settings["form_pristine"] = true;
-        $this->form_settings["form_num_error_found"] = 0;
-        $this->error_count = 0;
-        $this->form_settings["enctype"] = "";
-        $this->form_settings["form_class"] = "";
-        $this->form_settings["option"]=$option;
-        if (isset($args["show_mail_receipt"])) {
-            $this->show_mail_receipt = true;
-        }
-        if( function_exists('acf')) {
-            if (get_sub_field('form_name', $post_id)) {
-                 $this->form_settings["form-name"] = sanitize_title_with_dashes( get_sub_field('form_name') );
-            }
-            // elseif(isset($args["form_name"])) {
-            //     $this->form_settings["form-name"] = sanitize_title_with_dashes($args["form_name"]);
-            // }
-            // else {
-            //      $this->form_settings["form-name"] = "request-form";
-            // }
-            if (get_sub_field('button_text', $post_id)) {
-                  $this->form_settings["submit-button-text"] = get_sub_field('button_text');
-            }
-            // elseif(isset($args["button_text"])) {
-            //     $this->form_settings["submit-button-text"] = $args["button_text"];
-            // }
-            // else {
-            //       $this->form_settings["submit-button-text"] = "Submit Form";
-            // }
-        }
-
-        if(isset($args["form_name"])) {
-            $this->form_settings["form-name"] = sanitize_title_with_dashes($args["form_name"]);
-        }
-        else {
-             $this->form_settings["form-name"] = "request-form";
-        }
-        if(isset($args["button_text"])) {
-            $this->form_settings["submit-button-text"] = $args["button_text"];
-        }
-        else {
-              $this->form_settings["submit-button-text"] = "Submit Form";
-        }
-        if(isset($args["submit_button_name"])) {
-            $this->form_settings["submit-button-name"] = $args["submit_button_name"];
-        }
-        else {
-            $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
-        }
-
-        if (isset($args["clear_after_submission"])) {
-            // echo "<pre>";var_dump($args["clear_after_submission"]);echo "</pre>";
-            $this->clear_after_submission = $args["clear_after_submission"];
-            // echo "<pre>";var_dump($this->clear_after_submission);echo "</pre>";
-        }
-// $this->form_settings["form-name"] = "request-form";
-// $this->form_settings["submit-button-text"] = "Submit Form";
-// $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
-
-
-        $this->form_settings["error_class"] = "";
-        $this->form_settings["ajax"] = false;
-        $form_data = array();
-        
-if (is_array($form_inputs)) {
-    $this->form_settings["form_data"] = $form_inputs;
-}
-else if (is_string($form_inputs)) {
-    if( function_exists('acf')) {
-         // Construct the array that makes the form
-        if ( have_rows($form_inputs, $option) ) {
-
-            $this->form_settings = array();
-            $this->form_settings["form_pristine"] = true;
-            $this->form_settings["form_num_error_found"] = 0;
-            $this->form_settings["enctype"] = "";
-            $this->form_settings["form_class"] = "";
-            $this->form_settings["option"]=$option;
-            if (get_sub_field('form_name')) {
-                 $this->form_settings["form-name"] = sanitize_title_with_dashes( get_sub_field('form_name') );
-            }
-            else {
-                 $this->form_settings["form-name"] = "request-form";
-            }
-            if (get_sub_field('button_text')) {
-                  $this->form_settings["submit-button-text"] = get_sub_field('button_text');
-            }
-            else {
-                  $this->form_settings["submit-button-text"] = "Submit Form";
-            }
-
-            $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
-            $this->form_settings["error_class"] = "";
-            $this->form_settings["ajax"] = false;
-            $form_data = array();
-
-            while( have_rows($form_inputs, $option) ) : the_row(); // Loop through the repeater for form inputs
-
-                $name =  get_sub_field('name');
-                $id = sanitize_title_with_dashes( get_sub_field('name') );
-                $type = get_sub_field('type');
-                $label = get_sub_field('label');
-                $help = get_sub_field('help');
-                $placeholder = get_sub_field('placeholder');
-                $required = get_sub_field('required');
-                $select_options='';
-
-                // If the user has manually added options with the repeater
-                if( get_sub_field('select_options') ) {
-                    $select_options = get_sub_field('select_options');
-
-                    if(get_sub_field('select_type') === 'user') {                    
-                        for ($i = 0; $i < count($select_options); ++$i) {
-                            if($select_options[$i]['option_value']=='') {
-                                $select_options[$i]['option_value'] = sanitize_title_with_dashes( $select_options[$i]['option'] );
-                            }
-                        }   
-                    }
-                }
-
-                // If the user has elected to select predefined options - only countries available at the moment
-                if(get_sub_field('select_type') === 'select') {
-                    $countries = getCountries(); // Returns an array of countries
-                    $i=0;
-                    // Push each entry into $select_options in a usable way
-                    foreach ($countries as $key => $value) {
-                        ++$i;
-                        $select_options[$i]['option_value']  = sanitize_title_with_dashes($key);
-                        $select_options[$i]['option'] = $value;//$key;
-                    }                     
-                }
-
-                if($required) {
-                    $required = 'required';
-                }
-                else {
-                    $required = '';
-                }
-                if(!$label) {
-                    $label = $name;
-                }
-
-                switch ($type) {
-                    case "text":
-                    case "url":
-                    case "email":
-                    case "number":
-                        $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "help"=>$help);
-                        break;
-                    case "textarea":
-                        $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "help"=>$help);
-                        break; 
-                    case "select":
-                        $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "options"=>$select_options, "selected_option"=>"", "help"=>$help);
-                        break;
-                    case "multi_select":
-                        $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "options"=>$select_options, "selected_option"=>"", "help"=>$help);
-                        break;    
-                   case "file":
-                        $this->form_settings["enctype"] = ' enctype="multipart/form-data"';
-                        $this->form_settings["form_class"] = 'js-check-form-file';
-                        $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "accept"=>"pdf", "help"=>$help);
-                        break;            
-                }           
-                    
-            endwhile;// End the AFC loop  
-            $this->form_settings["form_data"] = $form_data;
-        }
+        include('_set-form-data.php');
     }
-}
 
-   
-
-
-    // return $this->form_settings;   
-
-    
- 
-}
-
-
-public function acf_build_form() {
-?>
-    <?php if ($this->error_count>0): ?>
-        <div class="callout alert">
-            <h3>Errors Found</h3>
-            <p>We're sorry, there has been an error with the form input. Please rectify the <?php echo $this->error_count ?> errors below and resubmit.</p>
-            <ul><?php 
-            foreach ($this->form_settings["form_data"] as $key => $data) {
-                if (!$data["passed"]) {
-                    if ($data["help"]): 
-                    ?>
-                        <li><?php echo $data["help"] ?></li>
-                    <?php else: 
-                        $help = $data['label'].' is required';
-                        if ($data['type']=='email' || $data['type']=='url') {
-                            $help .= ' and must be valid';
-                        }
-                        ?>
-                        <li><?php echo $help ?></li>
-                    <?php 
-                    endif;
-                }
-             } 
-             ?></ul>
-        </div>
-    <?php endif ?>
-    <?php 
-        $framework='zurb';
-        $options = get_option( 'wp_swift_form_builder_settings' );
-
-        if (isset($options['wp_swift_form_builder_select_css_framework'])) {
-            $framework = $options['wp_swift_form_builder_select_css_framework'];
-        }
-
-     ?>
-    <form method="post" name="<?php echo $this->form_settings["form-name"]; ?>" id="<?php echo $this->form_settings["form-name"]; ?>" class="<?php echo $framework.' '; echo $this->form_settings["form_class"]; ?>"  novalidate<?php echo $this->form_settings["enctype"]; ?>>
-        <?php
-        $tabIndex = $this->front_end_form_input_loop($this->form_settings["form_data"], $tabIndex=1, $this->form_settings["form_pristine"], $this->form_settings["form_num_error_found"]);// ?>
-
-        <!-- <div id="form-hide-until-focus"> -->
-            <?php if ($this->show_mail_receipt): ?>
-                <div class="row form-builder">
-                    <div class="<?php echo $this->get_form_label_div_class() ?>form-label"></div>
-                    <div class="<?php echo $this->get_form_input_div_class() ?>form-input">
-                        <div class="checkbox">
-                          <input type="checkbox" value="" tabindex=<?php echo $tabIndex; ?> name="mail-receipt" id="mail-receipt"><label for="mail-receipt">Acknowledge me with a mail receipt</label>
-                        </div>
-                    </div>                  
-                </div>                       
-            <?php endif ?>      
-           <?php if (isset($recpatcha)): ?>
-            <!--  <div class="row" id="g-recaptcha-row">
-                <div class="columns"><div class="g-recaptcha-wrapper"><div class="g-recaptcha" id="g-recaptcha"></div></div></div>
-            </div>   -->
-            <!-- <div class="g-recaptcha" data-sitekey="6LelawkUAAAAAHlXmEywVaGXQnhcskUkU3tUnzD7"></div>           -->
-        <!-- </div> -->
-               
-           <?php endif ?>
-        <?php $tabIndex++; ?>
-        <div class="row form-builder">
-            <div class="<?php echo $this->get_form_label_div_class() ?>form-label"></div>
-            <div class="<?php echo $this->get_form_input_div_class() ?>form-input">
-                <button type="submit" name="<?php echo $this->form_settings["submit-button-name"]; ?>" id="<?php echo $this->form_settings["submit-button-name"]; ?>" class="button large" tabindex=<?php echo $tabIndex; ?>><?php echo $this->form_settings["submit-button-text"]; ?></button>
-            </div>
-        </div>
-    </form> 
-<?php   
-}
+    /*
+     * Build the form
+     */
+    public function acf_build_form() {
+        include('_acf-build-form.php');
+    }
 
 public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristine=true, $form_num_error_found=0) {
     $i=0;
@@ -564,7 +344,7 @@ private function form_element_anchor($id) {
     ?><a href="<?php echo $id; ?>-anchor"></a><?php
 }
 private function form_element_label($id, $data) {
-    ?><div class="<?php echo $this->get_form_label_div_class() ?>form-label"><!-- Lorem ipsum dolor sit amet, consectetur adipisicing elit. Suscipit tempore quisquam at aperiam iure in laudantium delectus ipsa molestias dolores. Praesentium dolores cumque quos reiciendis, qui quae expedita cum perspiciatis. -->
+    ?><div class="<?php echo $this->get_form_label_div_class() ?>form-label">
         <label for="<?php echo $id; ?>" class="control-label <?php echo $data['required']; ?>"><?php echo $data['label']; ?> <span></span></label>
     </div><?php     
 }
