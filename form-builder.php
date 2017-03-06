@@ -22,6 +22,7 @@ class WP_Swift_Form_Builder_Plugin {
     private $clear_after_submission = true;
     private $Section_Layout_Addon = null;
     private $default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
+    private $form_class ='';
     /*
      * Initializes the plugin.
      */

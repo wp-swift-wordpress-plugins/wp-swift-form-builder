@@ -73,6 +73,9 @@ if (isset($args["action"]) && $args["action"]!='') {
 if (isset($args["check_from_data_for_errors"])) {
     $this->check_from_data_for_errors = $args["check_from_data_for_errors"];
 }
+if (isset($args["form_class"])) {
+    $this->form_class = $args["form_class"];
+}
 // $this->form_settings["form-name"] = "request-form";
 // $this->form_settings["submit-button-text"] = "Submit Form";
 // $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
