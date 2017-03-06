@@ -7,29 +7,47 @@ if ($this->error_count>0): ?>
         <h3>Errors Found</h3>
         <p>We're sorry, there has been an error with the form input. Please rectify the <?php echo $this->error_count ?> errors below and resubmit.</p>
         <ul><?php 
-        foreach ($this->form_settings["form_data"] as $key => $data) {
-            if (!$data["passed"]) {
-                if ($data["help"]): 
-                ?>
-                    <li><?php echo $data["help"] ?></li>
-                <?php else: 
-                    $help = $data['label'].' is required';
-                    if ($data['type']=='email' || $data['type']=='url') {
-                        $help .= ' and must be valid';
+            if ($this->check_from_data_for_errors) {
+               foreach ($this->form_settings["form_data"] as $key => $data) {
+                    if (!$data["passed"]) {
+                        if ($data["help"]): 
+                        ?>
+                            <li><?php echo $data["help"] ?></li>
+                        <?php else: 
+                            $help = $data['label'].' is required';
+                            if ($data['type']=='email' || $data['type']=='url') {
+                                $help .= ' and must be valid';
+                            }
+                            ?>
+                            <li><?php echo $help ?></li>
+                        <?php 
+                        endif;
                     }
-                    ?>
-                    <li><?php echo $help ?></li>
-                <?php 
-                endif;
+                 }
             }
-         }
-         if (count($this->extra_error_msgs)) {
-          	foreach ($this->extra_error_msgs as $key => $msg) {
-				?>
+            if (count($this->extra_error_msgs)) {
+            	foreach ($this->extra_error_msgs as $key => $msg) {
+            	?>
                     <li><?php echo $msg ?></li>
                 <?php 
-          	}
-          } 
+            	}
+            } 
+         ?></ul>
+    </div>
+<?php 
+endif;
+
+if (count($this->extra_msgs ) > 0 ): ?>
+    <div class="callout warning">
+        <h3>Notifications</h3>
+        <ul><?php 
+            if (count($this->extra_msgs)) {
+                foreach ($this->extra_msgs as $key => $msg) {
+                ?>
+                    <li><?php echo $msg ?></li>
+                <?php 
+                }
+            } 
          ?></ul>
     </div>
 <?php 

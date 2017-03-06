@@ -70,6 +70,9 @@ if (isset($args["clear_after_submission"])) {
 if (isset($args["action"]) && $args["action"]!='') {
 	$this->action = 'action="'.$args["action"].'"';
 }
+if (isset($args["check_from_data_for_errors"])) {
+    $this->check_from_data_for_errors = $args["check_from_data_for_errors"];
+}
 // $this->form_settings["form-name"] = "request-form";
 // $this->form_settings["submit-button-text"] = "Submit Form";
 // $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
@@ -162,11 +165,13 @@ else if (is_string($form_inputs)) {
                     case "url":
                     case "email":
                     case "number":
+                    case "password":
                         $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "help"=>$help);
                         break;
                     case "textarea":
                         $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "help"=>$help);
                         break; 
+                    case "checkbox":
                     case "select":
                         $form_data['form-'.$id] = array("passed"=>false, "clean"=>"", "value"=>"", "section"=>1, "required"=>$required, "type"=>$type,  "placeholder"=>$placeholder, "label"=>$label, "options"=>$select_options, "selected_option"=>"", "help"=>$help);
                         break;

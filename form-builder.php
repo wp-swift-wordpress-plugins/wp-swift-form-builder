@@ -17,6 +17,8 @@ class WP_Swift_Form_Builder_Plugin {
     private $form_pristine = true;
     private $error_count = 0;
     private $extra_error_msgs = array();
+    private $extra_msgs = array();
+    private $check_from_data_for_errors = true;
     private $clear_after_submission = true;
     private $Section_Layout_Addon = null;
     private $default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
@@ -104,12 +106,25 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
     /*
      * Increase extra_error_msgs
      */
-    public function add_extra_error_msgs($msg) {
+    public function add_extra_error_msgs($msg, $increase_count=false) {
+        if ($increase_count) {
+           $this->error_count++;
+        }
         $this->extra_error_msgs[] = $msg;
     }
 
-
-
+    /*
+     * Get extra msgs
+     */
+    public function get_extra_msgs() {
+        return $this->extra_msgs;
+    }
+    /*
+     * Add new msg
+     */
+    public function add_extra_msg($msg) {
+        $this->extra_msgs[] = $msg;
+    }
 
     public function enqueue_javascript () {
         $options = get_option( 'wp_swift_form_builder_settings' );
@@ -150,77 +165,7 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
     }
 
 public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristine=true, $form_num_error_found=0) {
-    $i=0;
-
-    foreach ($form_data as $id => $data):
-        $tabIndex++;
-        $i++;
-    // $section_open=false;
-        /*if($i!=$data['section']): ?>
-            <div class="row">
-                <div class="small-12 large-4 columns"></div>
-                <div class="small-12 large-8 columns">
-                    <h4><?php echo $form_headers[$i]; ?></h4>
-                </div>
-            </div>
-            <?php
-            $i=$data['section'];
-        endif;*/
-
-        switch ($data['type']) {
-            case "section": 
-                if ($this->Section_Layout_Addon) {
-                    $this->Section_Layout_Addon->section_open($data['section_header'], $data['section_content']);
-                }
-                else {
-                    $this->section_open($data['section_header'], $data['section_content']);
-                }
-                break; 
-            case "section_close":
-                if ($this->Section_Layout_Addon) {
-                    $this->Section_Layout_Addon->section_close();
-                }
-                else {
-                    $this->section_close();
-                } 
-                break;               
-            case "text":
-            case "url":
-            case "email":
-            case "number":
-            case "username":
-                $this->bld_form_input($id, $data, $tabIndex);
-                break;
-            case "hidden":
-                $this->bld_form_hidden_input($id, $data);
-                break;
-            case "textarea":
-                $this->bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
-                break; 
-            case "radio":
-                $this->build_form_radio($id, $data, $tabIndex);
-                break; 
-            case "select":
-                $this->bldFormSelect($id, $data, $tabIndex, '');
-                break;
-            case "select2":
-                $this->bldFormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
-            case "multi_select":
-                $this->bldFormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
-                // $this->bldFormSelect($id, $data, $form_pristine, $form_num_error_found, $tabIndex, 'multiple');   
-                break; 
-            case "file":
-                $this->bldFormFileUpload($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
-                break; 
-            case "date_range":
-                bldFormDateRange($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
-                break;    
-            case "password_combo":
-                $tabIndex = bldFormPasswordCombo($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
-                break;                                                               
-        }           
-    endforeach;
-    return $tabIndex;    
+    include('_front-end-form-input-loop.php');
 }
 /*
  * Build the HTML before the form input
@@ -261,7 +206,13 @@ public function after_form_input($id, $data) {
             $data_type = 'username';
         }
         $data = $this->before_form_input($id, $data);
-        $name = $id;
+        if (isset($data['name'])) {
+            $name = $data['name'];
+        }
+        else {
+            $name = $id;
+        }
+        
         if (isset($data['id-index'])) {
             $id .= '-'.$data['id-index'];
         }
@@ -305,10 +256,18 @@ public function after_form_input($id, $data) {
         else {
             $data_type = $data['type'];
         }
-        $name = $id;
+        if (isset($data['name'])) {
+            $name = $data['name'];
+        }
+        else {
+            $name = $id;
+        }
+        
         if (isset($data['id-index'])) {
             $id .= '-'.$data['id-index'];
         }
+        echo "<pre>name: "; var_dump($name); echo "</pre>";
+        echo "<pre>value: "; var_dump($data['value']); echo "</pre>";
         ?><input 
             type="hidden" 
             data-type="<?php echo $data_type; ?>" 
@@ -345,7 +304,9 @@ private function form_element_anchor($id) {
 }
 private function form_element_label($id, $data) {
     ?><div class="<?php echo $this->get_form_label_div_class() ?>form-label">
-        <label for="<?php echo $id; ?>" class="control-label <?php echo $data['required']; ?>"><?php echo $data['label']; ?> <span></span></label>
+        <?php if ($data['label']!=''): ?>
+            <label for="<?php echo $id; ?>" class="control-label <?php echo $data['required']; ?>"><?php echo $data['label']; ?> <span></span></label>
+        <?php endif ?>
     </div><?php     
 }
 private function form_element_close() {
@@ -470,7 +431,37 @@ function build_form_radio($id, $data, $tabIndex) {
         endforeach; ?><?php
     $this->after_form_input($id, $data);
 }
+function build_form_checkbox($id, $data, $tabIndex) {
+    if(!$this->form_pristine) {
+        if($this->clear_after_submission && $this->error_count===0) {
+            // No errors found so clear the selected value
+            $data['selected_option']=''; 
+        }
+    }
 
+    $this->before_form_input($id, $data);
+    $count=0;  
+    $checked='';
+    $name_append = '';
+    if (count($data['options']) > 1) {
+        $name_append = '[]';
+    }
+ 
+    foreach ($data['options'] as $option): $count++;
+        if ( $option['checked'] ){
+            $checked=' checked';
+        }
+        if (isset($data['name'])) {
+            $name = $data['name'].$name_append;
+        }
+        else {
+            $name = $id.'-checkbox'.$name_append;
+        }
+        ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $name ?>" type="checkbox" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
+        <label for="<?php echo $id.'-'.$count ?>"><?php echo $option['option'] ?></label><?php 
+    endforeach;
+    $this->after_form_input($id, $data);
+}
 
 
 function bld_FormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $multiple) {
