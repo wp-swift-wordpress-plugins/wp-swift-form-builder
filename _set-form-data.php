@@ -56,6 +56,7 @@ else {
 }
 if(isset($args["submit_button_name"])) {
     $this->form_settings["submit-button-name"] = $args["submit_button_name"];
+    $this->submit_button_name = $args["submit_button_name"];
 }
 else {
     $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];

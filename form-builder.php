@@ -24,6 +24,7 @@ class WP_Swift_Form_Builder_Plugin {
     private $default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
     private $form_class ='';
     private $submit_button_name = "submit-request-form";
+    private $success_msg = '';
 
 
     /*
@@ -75,7 +76,11 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
             }
         }
     }
-    /*
+
+    public function process_form() {
+        echo "parent<br><pre>";var_dump($_POST);echo "</pre>";
+    }
+     /*
      * Get the submit button name 
      * This can be used to check if this POST object was
      */
@@ -117,7 +122,7 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
     /*
      * Increase extra_error_msgs
      */
-    public function add_extra_error_msgs($msg, $increase_count=false) {
+    public function add_extra_error_msgs($msg, $increase_count=true) {
         if ($increase_count) {
            $this->error_count++;
         }
@@ -135,6 +140,13 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
      */
     public function add_extra_msg($msg) {
         $this->extra_msgs[] = $msg;
+    }
+
+    /*
+     * Set success msg
+     */
+    public function set_success_msg($msg) {
+        $this->success_msg = $msg;
     }
 
     public function enqueue_javascript () {
@@ -173,6 +185,13 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
      */
     public function acf_build_form() {
         include('_acf-build-form.php');
+    }
+
+        /*
+     * Build the form
+     */
+    public function read_only_form() {
+        // include('_acf-build-form.php');
     }
 
 public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristine=true, $form_num_error_found=0) {

@@ -2,10 +2,10 @@
 /*
  * acf_build_form()
  */
-if ($this->error_count>0): ?>
+if ($this->get_error_count()>0): ?>
     <div class="callout alert">
         <h3>Errors Found</h3>
-        <p>We're sorry, there has been an error with the form input. Please rectify the <?php echo $this->error_count ?> errors below and resubmit.</p>
+        <p>We're sorry, there has been an error with the form input. Please rectify the <?php echo $this->get_error_count() ?> errors below and resubmit.</p>
         <ul><?php 
             if ($this->check_from_data_for_errors) {
                foreach ($this->form_settings["form_data"] as $key => $data) {
@@ -34,7 +34,20 @@ if ($this->error_count>0): ?>
             } 
          ?></ul>
     </div>
+
 <?php 
+// endif;
+// $this->success_msg = "Testing";
+
+elseif($this->get_error_count()===0):
+?>
+    <?php if ($this->success_msg !== ''): ?>
+        <div class="callout warning">
+            <h3>Form Saved</h3>
+            <?php echo $this->success_msg; ?>
+        </div>
+    <?php endif ?>
+<?php
 endif;
 
 if (count($this->extra_msgs ) > 0 ): ?>
