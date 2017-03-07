@@ -23,6 +23,9 @@ class WP_Swift_Form_Builder_Plugin {
     private $Section_Layout_Addon = null;
     private $default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
     private $form_class ='';
+    private $submit_button_name = "submit-request-form";
+
+
     /*
      * Initializes the plugin.
      */
@@ -72,6 +75,13 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
             }
         }
     }
+    /*
+     * Get the submit button name 
+     * This can be used to check if this POST object was
+     */
+    public function get_submit_button_name() {
+        return $this->submit_button_name;
+    }    
     /*
      * Get form_pristine
      */
@@ -513,7 +523,7 @@ echo "<pre>"; var_dump($data); echo "</pre>";
     }
 
     public function section_close() {
-        ?><hr><!-- @end section --><?php       
+        ?><!-- @end section --><?php       
     } 
 
     public function html_section_open_side_by_side ($section_header, $section_content) {
