@@ -21,11 +21,15 @@
     }
 
     if(!is_array($this->form_settings["form_data"][$key]['value'])) {
+        // echo "value <pre>"; var_dump($this->form_settings["form_data"][$key]['value']); echo "</pre>";
         $this->form_settings["form_data"][$key]['value'] = trim($this->form_settings["form_data"][$key]['value']);
         // $this->form_settings["form_data"][$key]['value'] = stripslashes($this->form_settings["form_data"][$key]['value']);
         // $this->form_settings["form_data"][$key]['value'] = htmlspecialchars($this->form_settings["form_data"][$key]['value']);       
     }
-
+    // elseif(is_array($this->form_settings["form_data"][$key]['value'])) {
+    //     echo "is_array<pre>"; var_dump($this->form_settings["form_data"][$key]['value']); echo "</pre>";
+    // }
+    // echo "type:<pre>"; var_dump($this->form_settings["form_data"][$key]['type']); echo "</pre><br>";
     switch ($this->form_settings["form_data"][$key]['type']) {
         case "text":
         case "textarea":
@@ -78,8 +82,19 @@
                         return;  
                     }
                 }             
-            break;                              
-        default:;
+            break; 
+        case "password":
+                // echo "<pre>"; var_dump($value); echo "</pre>";  
+                break; 
+        case "checkbox":
+                if(!is_array($this->form_settings["form_data"][$key]['value'])) {
+                    $this->form_settings["form_data"][$key]['selected_option'] = trim($this->form_settings["form_data"][$key]['value']);
+                }
+                // elseif(is_array($this->form_settings["form_data"][$key]['value'])) {
+                //     echo "is_array<pre>"; var_dump($this->form_settings["form_data"][$key]['value']); echo "</pre>";
+                // }
+                break;                          
+        // default: echo "<pre>"; var_dump($value); echo "</pre>";
     }
     // esc_attr() - Escaping for HTML attributes. Encodes the <, >, &, ” and ‘ (less than, greater than, ampersand, double quote and single quote) characters. Will never double encode entities.
     // $this->form_settings["form_data"][$key]['clean'] =  esc_attr($this->form_settings["form_data"][$key]['value']);

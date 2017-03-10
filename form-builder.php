@@ -63,10 +63,12 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         $this->default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
         $this->default_input_keys_to_skip = array_merge($this->default_input_keys_to_skip, $input_keys_to_skip);
 
+// echo "<pre>"; var_dump($this->form_settings["form_data"]); echo "</pre>";
         // The form is submitted by a user and so is no longer pristine
         $this->set_form_pristine(false);
         //Loop through the POST and validate. Store the values in $form_data
         foreach ($_POST as $key => $value) {
+            // echo "key <pre>"; var_dump($key); echo "</pre>";
             if (!in_array($key, $this->default_input_keys_to_skip)) { //Skip the button,  mail-receipt checkbox, g-recaptcha-response etc
                 $check_if_submit = substr($key, 0, 7);
                 // Get the substring of the key and make sure it is not a submit button
@@ -469,7 +471,7 @@ function build_form_checkbox($id, $data, $tabIndex) {
         }
     }
 
-    $this->before_form_input($id, $data);
+    $data = $this->before_form_input($id, $data);
     $count=0;  
     $checked='';
     $name_append = '';
@@ -485,12 +487,13 @@ function build_form_checkbox($id, $data, $tabIndex) {
             $name = $data['name'].$name_append;
         }
         else {
-            $name = $id.'-checkbox'.$name_append;
+            $name = $id.''.$name_append;
+            // $name = $id.'-checkbox'.$name_append;
         }
         ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $name ?>" type="checkbox" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
         <label for="<?php echo $id.'-'.$count ?>"><?php echo $option['option'] ?></label><?php 
     endforeach;
-    $this->after_form_input($id, $data);
+    $data = $this->after_form_input($id, $data);
 }
 
 
