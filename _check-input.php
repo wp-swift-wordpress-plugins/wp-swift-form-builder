@@ -73,7 +73,6 @@
                     }
                 }
                 if (isset($this->form_settings["form_data"][$key]['expected'])) {
-                    echo "<pre>";var_dump($this->form_settings["form_data"][$key]['expected']);echo "</pre>";
                     if ($this->form_settings["form_data"][$key]['expected'] != $value ) {
                         $this->increase_error_count();
                         return;  

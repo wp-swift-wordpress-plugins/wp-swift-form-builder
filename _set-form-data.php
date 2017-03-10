@@ -43,10 +43,20 @@ if( function_exists('acf')) {
 }
 
 if(isset($args["form_name"])) {
-    $this->form_settings["form-name"] = sanitize_title_with_dashes($args["form_name"]);
+    $form_name = sanitize_title_with_dashes($args["form_name"]);
+    $this->form_settings["form-name"] = $form_name;
+    $this->form_name = $form_name;
 }
 else {
-     $this->form_settings["form-name"] = "request-form";
+    $form_name = "request-form";
+    $this->form_settings["form-name"] = $form_name;
+    $this->form_name = $form_name;
+}
+if (isset($args["form_id"])) {
+    $this->form_id = $args["form_id"];
+}
+else {
+    $this->form_id = $this->form_name;
 }
 if(isset($args["button_text"])) {
     $this->form_settings["submit-button-text"] = $args["button_text"];

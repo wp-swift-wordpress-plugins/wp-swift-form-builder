@@ -12,6 +12,8 @@ class WP_Swift_Form_Builder_Plugin {
     public $action='';
     public $form_settings = null;
     private $post_id = null;
+    private $form_id = '';
+    private $form_name = '';
     private $css_framework = "zurb_foundation";
     private $show_mail_receipt = false;
     private $form_pristine = true;
@@ -296,8 +298,6 @@ public function after_form_input($id, $data) {
         if (isset($data['id-index'])) {
             $id .= '-'.$data['id-index'];
         }
-        echo "<pre>name: "; var_dump($name); echo "</pre>";
-        echo "<pre>value: "; var_dump($data['value']); echo "</pre>";
         ?><input 
             type="hidden" 
             data-type="<?php echo $data_type; ?>" 

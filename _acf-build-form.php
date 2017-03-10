@@ -73,7 +73,7 @@ if (isset($options['wp_swift_form_builder_select_css_framework'])) {
     $framework = $options['wp_swift_form_builder_select_css_framework'];
 }
 ?>
-<form method="post" <?php echo $this->action; ?> name="<?php echo $this->form_settings["form-name"]; ?>" id="<?php echo $this->form_settings["form-name"]; ?>" class="<?php echo $framework.' '; echo $this->form_class; ?>"  novalidate<?php echo $this->form_settings["enctype"]; ?>>
+<form method="post" <?php echo $this->action; ?> name="<?php echo $this->form_name; ?>" id="<?php echo $this->form_id; ?>" class="<?php echo $framework.' '; echo $this->form_class.' '; echo $this->form_name ?>"  novalidate<?php echo $this->form_settings["enctype"]; ?>>
     <?php
     $tabIndex = $this->front_end_form_input_loop($this->form_settings["form_data"], $tabIndex=1, $this->form_settings["form_pristine"], $this->form_settings["form_num_error_found"]);// ?>
 
