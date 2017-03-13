@@ -10,68 +10,74 @@
 // public function set_form_data($form_inputs="form_inputs", $post_id, $args=false, $attributes= false, $option=false)
 
 
-$this->form_settings = array();
+// $this->form_settings = array();
 // $this->post_id = $post_id;
-$this->form_settings["form_pristine"] = true;
-$this->form_settings["form_num_error_found"] = 0;
+// $this->form_settings["form_pristine"] = true;
+// $this->form_settings["form_num_error_found"] = 0;
 $this->error_count = 0;
-$this->form_settings["enctype"] = "";
-$this->form_settings["form_class"] = "";
+// $this->form_settings["enctype"] = "";
+// $this->form_settings["form_class"] = "";
 $this->form_settings["option"]=$option;
 if (isset($args["show_mail_receipt"])) {
     $this->show_mail_receipt = true;
 }
-if( function_exists('acf')) {
-    if (get_sub_field('form_name', $post_id)) {
-         $this->form_settings["form-name"] = sanitize_title_with_dashes( get_sub_field('form_name') );
-    }
-    // elseif(isset($args["form_name"])) {
-    //     $this->form_settings["form-name"] = sanitize_title_with_dashes($args["form_name"]);
-    // }
-    // else {
-    //      $this->form_settings["form-name"] = "request-form";
-    // }
-    if (get_sub_field('button_text', $post_id)) {
-          $this->form_settings["submit-button-text"] = get_sub_field('button_text');
-    }
-    // elseif(isset($args["button_text"])) {
-    //     $this->form_settings["submit-button-text"] = $args["button_text"];
-    // }
-    // else {
-    //       $this->form_settings["submit-button-text"] = "Submit Form";
-    // }
-}
+// if( function_exists('acf')) {
+//     if (get_sub_field('form_name', $post_id)) {
+//          $this->form_settings["form-name"] = sanitize_title_with_dashes( get_sub_field('form_name') );
+//     }
+//     // elseif(isset($args["form_name"])) {
+//     //     $this->form_settings["form-name"] = sanitize_title_with_dashes($args["form_name"]);
+//     // }
+//     // else {
+//     //      $this->form_settings["form-name"] = "request-form";
+//     // }
+//     if (get_sub_field('button_text', $post_id)) {
+//           $this->form_settings["submit-button-text"] = get_sub_field('button_text');
+//     }
+//     // elseif(isset($args["button_text"])) {
+//     //     $this->form_settings["submit-button-text"] = $args["button_text"];
+//     // }
+//     // else {
+//     //       $this->form_settings["submit-button-text"] = "Submit Form";
+//     // }
+// }
 
 if(isset($args["form_name"])) {
     $form_name = sanitize_title_with_dashes($args["form_name"]);
-    $this->form_settings["form-name"] = $form_name;
     $this->form_name = $form_name;
 }
 else {
-    $form_name = "request-form";
-    $this->form_settings["form-name"] = $form_name;
-    $this->form_name = $form_name;
+    $this->form_name = "request-form";
 }
+
 if (isset($args["form_id"])) {
     $this->form_id = $args["form_id"];
 }
 else {
     $this->form_id = $this->form_name;
 }
-if(isset($args["button_text"])) {
-    $this->form_settings["submit-button-text"] = $args["button_text"];
-}
-else {
-      $this->form_settings["submit-button-text"] = "Submit Form";
-}
+
 if(isset($args["submit_button_name"])) {
-    $this->form_settings["submit-button-name"] = $args["submit_button_name"];
     $this->submit_button_name = $args["submit_button_name"];
 }
 else {
-    $this->form_settings["submit-button-name"] = "submit-".$this->form_settings["form-name"];
-    $this->submit_button_name = "submit-".$this->form_settings["form-name"];
+    $this->submit_button_name = "submit-".$this->form_name;
 }
+
+if(isset($args["submit_button_id"])) {
+    $this->submit_button_id = $args["submit_button_id"];
+}
+else {
+    $this->submit_button_id = $this->submit_button_name;
+}
+
+if(isset($args["button_text"])) {
+    $this->submit_button_text = $args["button_text"];
+}
+else {
+    $this->submit_button_text = "Submit Form";
+}
+
 
 if (isset($args["clear_after_submission"])) {
     // echo "<pre>";var_dump($args["clear_after_submission"]);echo "</pre>";
@@ -82,8 +88,8 @@ if (isset($args["clear_after_submission"])) {
 if (isset($args["action"]) && $args["action"]!='') {
 	$this->action = 'action="'.$args["action"].'"';
 }
-if (isset($args["check_from_data_for_errors"])) {
-    $this->check_from_data_for_errors = $args["check_from_data_for_errors"];
+if (isset($args["list_form_errors_in_warning_panel"])) {
+    $this->list_form_errors_in_warning_panel = $args["list_form_errors_in_warning_panel"];
 }
 if (isset($args["form_class"])) {
     $this->form_class = $args["form_class"];
@@ -99,6 +105,7 @@ $form_data = array();
         
 if (is_array($form_inputs)) {
     $this->form_settings["form_data"] = $form_inputs;
+    $this->form_inputs = $form_inputs;
 }
 else if (is_string($form_inputs)) {
     if( function_exists('acf')) {

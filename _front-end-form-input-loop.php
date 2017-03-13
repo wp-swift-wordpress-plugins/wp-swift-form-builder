@@ -6,11 +6,13 @@
 
 $i=0;
 
-foreach ($form_data as $id => $data):
-    $tabIndex++;
+foreach ($this->form_inputs as $id => $input):
+    // $tabIndex++;
+    // $this->tab_index++;
+
     $i++;
 // $section_open=false;
-    /*if($i!=$data['section']): ?>
+    /*if($i!=$input['section']): ?>
         <div class="row">
             <div class="small-12 large-4 columns"></div>
             <div class="small-12 large-8 columns">
@@ -18,16 +20,16 @@ foreach ($form_data as $id => $data):
             </div>
         </div>
         <?php
-        $i=$data['section'];
+        $i=$input['section'];
     endif;*/
 
-    switch ($data['type']) {
+    switch ($input['type']) {
         case "section": 
             if ($this->Section_Layout_Addon) {
-                $this->Section_Layout_Addon->section_open($data['section_header'], $data['section_content']);
+                $this->Section_Layout_Addon->section_open($input['section_header'], $input['section_content']);
             }
             else {
-                $this->section_open($data['section_header'], $data['section_content']);
+                $this->section_open($input['section_header'], $input['section_content']);
             }
             break; 
         case "section_close":
@@ -44,37 +46,36 @@ foreach ($form_data as $id => $data):
         case "number":
         case "username": // Wordpress username
         case "password":
-            $this->bld_form_input($id, $data, $tabIndex);
+            $this->bld_form_input($id, $input);
             break;
         case "hidden":
-            $this->bld_form_hidden_input($id, $data);
+            $this->bld_form_hidden_input($id, $input);
             break;
         case "textarea":
-            $this->bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
+            $this->bld_form_textarea($id, $input);
             break; 
         case "radio":
-            $this->build_form_radio($id, $data, $tabIndex);
+            $this->build_form_radio($id, $input);
         case "checkbox":
-            $this->build_form_checkbox($id, $data, $tabIndex);
+            $this->build_form_checkbox($id, $input);
             break; 
         case "select":
-            $this->bldFormSelect($id, $data, $tabIndex, '');
+            $this->bldFormSelect($id, $input, '');
             break;
-        case "select2":
-            $this->bldFormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
-        case "multi_select":
-            $this->bldFormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
-            // $this->bldFormSelect($id, $data, $form_pristine, $form_num_error_found, $tabIndex, 'multiple');   
-            break; 
-        case "file":
-            $this->bldFormFileUpload($id, $data, $form_pristine, $form_num_error_found, $tabIndex);
-            break; 
-        case "date_range":
-            bldFormDateRange($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
-            break;    
-        case "password_combo":
-            $tabIndex = bldFormPasswordCombo($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
-            break;                                                               
+        // case "select2":
+        //     $this->bldFormSelect2($id, $input, $form_pristine, $form_num_error_found, $tabIndex);
+        // case "multi_select":
+        //     $this->bldFormSelect2($id, $input, $form_pristine, $form_num_error_found, $tabIndex);
+            // $this->bldFormSelect($id, $input, $form_pristine, $form_num_error_found, $tabIndex, 'multiple');   
+            // break; 
+        // case "file":
+        //     $this->bldFormFileUpload($id, $input, $form_pristine, $form_num_error_found, $tabIndex);
+        //     break; 
+        // case "date_range":
+        //     bldFormDateRange($id, $input, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
+        //     break;    
+        // case "password_combo":
+        //     bldFormPasswordCombo($id, $input, $form_pristine, $form_num_error_found, $tabIndex, $section_id);
+            // break;                                                               
     }           
 endforeach;
-return $tabIndex;     

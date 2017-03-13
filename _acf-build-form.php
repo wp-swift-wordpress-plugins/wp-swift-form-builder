@@ -3,13 +3,14 @@
  * acf_build_form()
  */
 if ($this->get_error_count()>0): ?>
-    <div class="callout alert">
+    <div class="callout warning">
         <h3>Errors Found</h3>
         <p>We're sorry, there has been an error with the form input. Please rectify the <?php echo $this->get_error_count() ?> errors below and resubmit.</p>
         <ul><?php 
-            if ($this->check_from_data_for_errors) {
-               foreach ($this->form_settings["form_data"] as $key => $data) {
-                    if (!$data["passed"]) {
+            if ($this->list_form_errors_in_warning_panel) {
+               foreach ($this->form_inputs as $key => $data) {
+
+                    if (!$data["passed"] && $data["type"] != "checkbox") {
                         if ($data["help"]): 
                         ?>
                             <li><?php echo $data["help"] ?></li>
@@ -50,7 +51,7 @@ elseif($this->get_error_count()===0):
 <?php
 endif;
 
-if (count($this->extra_msgs ) > 0 ): ?>
+if (count($this->extra_msgs ) > 0 && $this->get_error_count()===0): ?>
     <div class="callout warning">
         <h3>Notifications</h3>
         <ul><?php 
@@ -73,9 +74,10 @@ if (isset($options['wp_swift_form_builder_select_css_framework'])) {
     $framework = $options['wp_swift_form_builder_select_css_framework'];
 }
 ?>
-<form method="post" <?php echo $this->action; ?> name="<?php echo $this->form_name; ?>" id="<?php echo $this->form_id; ?>" class="<?php echo $framework.' '; echo $this->form_class.' '; echo $this->form_name ?>"  novalidate<?php echo $this->form_settings["enctype"]; ?>>
+<form method="post" <?php echo $this->action; ?> name="<?php echo $this->form_name; ?>" id="<?php echo $this->form_id; ?>" class="<?php echo $framework.' '; echo $this->form_class.' '; echo $this->form_name ?>"  novalidate<?php echo $this->enctype; ?>>
     <?php
-    $tabIndex = $this->front_end_form_input_loop($this->form_settings["form_data"], $tabIndex=1, $this->form_settings["form_pristine"], $this->form_settings["form_num_error_found"]);// ?>
+        $this->front_end_form_input_loop($this->form_inputs, $this->tab_index, $this->form_pristine, $this->error_count);
+    ?>
 
     <!-- <div id="form-hide-until-focus"> -->
         <?php if ($this->show_mail_receipt): ?>
@@ -83,7 +85,7 @@ if (isset($options['wp_swift_form_builder_select_css_framework'])) {
                 <div class="<?php echo $this->get_form_label_div_class() ?>form-label"></div>
                 <div class="<?php echo $this->get_form_input_div_class() ?>form-input">
                     <div class="checkbox">
-                      <input type="checkbox" value="" tabindex=<?php echo $tabIndex; ?> name="mail-receipt" id="mail-receipt"><label for="mail-receipt">Acknowledge me with a mail receipt</label>
+                      <input type="checkbox" value="" tabindex=<?php echo $this->tab_index; ?> name="mail-receipt" id="mail-receipt"><label for="mail-receipt">Acknowledge me with a mail receipt</label>
                     </div>
                 </div>                  
             </div>                       
@@ -96,11 +98,11 @@ if (isset($options['wp_swift_form_builder_select_css_framework'])) {
     <!-- </div> -->
            
        <?php endif ?>
-    <?php $tabIndex++; ?>
+
     <div class="row form-builder">
         <div class="<?php echo $this->get_form_label_div_class() ?>form-label"></div>
         <div class="<?php echo $this->get_form_input_div_class() ?>form-input">
-            <button type="submit" name="<?php echo $this->form_settings["submit-button-name"]; ?>" id="<?php echo $this->form_settings["submit-button-name"]; ?>" class="button large" tabindex=<?php echo $tabIndex; ?>><?php echo $this->form_settings["submit-button-text"]; ?></button>
+            <button type="submit" name="<?php echo $this->submit_button_name; ?>" id="<?php echo $this->submit_button_id; ?>" class="button large" tabindex="<?php echo $this->tab_index++; ?>"><?php echo $this->submit_button_text; ?></button>
         </div>
     </div>
 </form>

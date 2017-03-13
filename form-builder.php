@@ -10,22 +10,27 @@ Text Domain:       wp-swift-form-builder
 
 class WP_Swift_Form_Builder_Plugin {
     public $action='';
-    public $form_settings = null;
+    // public $form_settings = null;
+    public $form_inputs = array();
     private $post_id = null;
     private $form_id = '';
     private $form_name = '';
+    private $submit_button_id = '';
+    private $submit_button_name = '';
+    private $submit_button_text = '';
     private $css_framework = "zurb_foundation";
     private $show_mail_receipt = false;
     private $form_pristine = true;
+    private $enctype = '';
     private $error_count = 0;
+    private $tab_index = 1;
     private $extra_error_msgs = array();
     private $extra_msgs = array();
-    private $check_from_data_for_errors = true;
+    private $list_form_errors_in_warning_panel = true;
     private $clear_after_submission = true;
     private $Section_Layout_Addon = null;
     private $default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
-    private $form_class ='';
-    private $submit_button_name = "submit-request-form";
+    private $form_class ='form-builder';
     private $success_msg = '';
 
 
@@ -57,8 +62,18 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         }
     }
 
+    public function get_form_inputs() {
+        return $this->form_inputs;
+    }
 
-
+    public function get_form_inputs_value($key) {
+        if (isset($this->form_inputs[$key])) {
+            return $this->form_inputs[$key];
+        }
+        else {
+            return false;
+        }
+    }
     public function validate_form($input_keys_to_skip=array()) {
         $this->default_input_keys_to_skip = array('submit-request-form', 'mail-receipt', 'form-file-upload', 'g-recaptcha-response');
         $this->default_input_keys_to_skip = array_merge($this->default_input_keys_to_skip, $input_keys_to_skip);
@@ -153,6 +168,15 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         $this->success_msg = $msg;
     }
 
+    /*
+     * Set success msg
+     */
+    public function set_input_error($key, $msg) {
+        $this->form_inputs[$key]["help"] = $msg;
+        $this->form_inputs[$key]["passed"] = false;
+        $this->increase_error_count();
+    }
+
     public function enqueue_javascript () {
         $options = get_option( 'wp_swift_form_builder_settings' );
         // echo "<pre>wp-swift-form-builder</pre>";
@@ -198,7 +222,10 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         // include('_acf-build-form.php');
     }
 
-public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristine=true, $form_num_error_found=0) {
+// public function front_end_form_input_loop($form_data, $tabIndex=1, $form_pristine=true, $form_num_error_found=0) {
+//     include('_front-end-form-input-loop.php');
+// }
+public function front_end_form_input_loop() {
     include('_front-end-form-input-loop.php');
 }
 /*
@@ -221,7 +248,7 @@ public function after_form_input($id, $data) {
     return $data;
 }
 
-    public function bld_form_input($id, $data, $tabIndex=0, $section='') {
+    public function bld_form_input($id, $data, $section='') {
         // echo "<pre>"; var_dump($data); echo "</pre>";
         $has_error='';
         // echo "<pre>this->form_pristine: "; var_dump($this->form_pristine); echo "</pre>";
@@ -256,7 +283,7 @@ public function after_form_input($id, $data) {
             class="<?php echo $this->get_form_input_class() ?>" 
             id="<?php echo $id; ?>" 
             name="<?php echo $name; ?>" 
-            tabindex="<?php echo $tabIndex; ?>" 
+            tabindex="<?php echo $this->tab_index++; ?>" 
             <?php if ( isset($data["value"])): ?> value="<?php echo $data['value'] ?>" <?php endif ?>
             <?php if ( isset($data["placeholder"])): ?> placeholder="<?php echo $data['placeholder'] ?>" <?php endif ?>
             <?php if ( isset($data["section"])): ?> data-section="<?php echo $data["section"] ?>" <?php endif ?>
@@ -315,10 +342,12 @@ public function after_form_input($id, $data) {
 private function form_element_open($id, $data) {
         $has_error='';
 
-        if(!$this->form_pristine && $data['passed']==false) {
+        if(!$this->form_pristine && $data['passed']==false && $data["type"] !== "checkbox") {
             // This input has has error detected so add an error class to the surrounding div
             $has_error = 'has-error';
         }
+        // echo "<pre>has_error: "; var_dump($has_error); echo "</pre>";
+        // echo "<pre>"; var_dump($data); echo "</pre>";
         if(!$this->form_pristine) {
             if($this->clear_after_submission && $this->error_count===0) {
                 // No errors found so clear the values
@@ -405,22 +434,22 @@ private function get_form_input_class() {
 public function set_css_framework($css_framework) {
     $this->css_framework = $css_framework;
 }
-function bldFormTextarea($id, $data, $form_pristine, $form_num_error_found, $tabIndex) {
+function bld_form_textarea($id, $input) {
     if(!$this->form_pristine) {
         if($this->clear_after_submission && $this->error_count===0) {
             // No errors found so clear the values
-            $data['value']=''; 
+            $input['value']=''; 
         }
     }
 
-    $this->before_form_input($id, $data);   
-    ?><textarea class="form-control js-form-control" rows="3" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex=<?php echo $tabIndex; ?> placeholder="<?php echo $data['placeholder']; ?>" <?php echo $data['required']; ?>><?php echo $data['value']; ?></textarea><?php
-    $this->after_form_input($id, $data);
+    $this->before_form_input($id, $input);   
+    ?><textarea class="form-control js-form-control" rows="3" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex="<?php echo $this->tab_index++; ?>" placeholder="<?php echo $input['placeholder']; ?>" <?php echo $input['required']; ?>><?php echo $input['value']; ?></textarea><?php
+    $this->after_form_input($id, $input);
 
 }
 
 
-function bldFormSelect($id, $data, $tabIndex, $multiple) {
+function bldFormSelect($id, $data, $multiple) {
     if(!$this->form_pristine) {
         if($this->clear_after_submission && $this->error_count===0) {
             // No errors found so clear the selected value
@@ -429,7 +458,7 @@ function bldFormSelect($id, $data, $tabIndex, $multiple) {
     }
 
     $this->before_form_input($id, $data);   
-      ?><select class="form-control js-form-control" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex=<?php echo $tabIndex; ?> <?php echo $data['required']; ?> <?php echo $multiple; ?>>
+      ?><select class="form-control js-form-control" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex="<?php echo $this->tab_index++; ?>" <?php echo $data['required']; ?> <?php echo $multiple; ?>>
             <?php if(!$multiple): ?>
                 <option value="">Please select an option...</option>
             <?php endif; ?>
@@ -440,30 +469,30 @@ function bldFormSelect($id, $data, $tabIndex, $multiple) {
         </select><?php
     $this->after_form_input($id, $data);
 }
-function build_form_radio($id, $data, $tabIndex) {
+function build_form_radio($id, $input) {
     // echo "<pre>"; var_dump($id); echo "</pre>";
-    // echo "<pre>"; var_dump($data); echo "</pre>";
+    // echo "<pre>"; var_dump($input); echo "</pre>";
     if(!$this->form_pristine) {
         if($this->clear_after_submission && $this->error_count===0) {
             // No errors found so clear the selected value
-            $data['selected_option']=''; 
+            $input['selected_option']=''; 
         }
     }
 
-    $this->before_form_input($id, $data);
+    $this->before_form_input($id, $input);
     $count=0;  
     $checked='';
       ?><?php 
-        foreach ($data['options'] as $option): $count++;
-            if ( ($data['selected_option']=='' && $count==1) || ($data['selected_option']==$option['option_value'])){
+        foreach ($input['options'] as $option): $count++;
+            if ( ($input['selected_option']=='' && $count==1) || ($input['selected_option']==$option['option_value'])){
                 $checked=' checked';
             }
-            ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $id ?>-radio" type="radio" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
+            ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $id ?>-radio" type="radio" tabindex="<?php echo $this->tab_index++; ?>" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
             <label for="<?php echo $id.'-'.$count ?>"><?php echo $option['option'] ?></label><?php 
         endforeach; ?><?php
-    $this->after_form_input($id, $data);
+    $this->after_form_input($id, $input);
 }
-function build_form_checkbox($id, $data, $tabIndex) {
+function build_form_checkbox($id, $data) {
     if(!$this->form_pristine) {
         if($this->clear_after_submission && $this->error_count===0) {
             // No errors found so clear the selected value
@@ -490,7 +519,7 @@ function build_form_checkbox($id, $data, $tabIndex) {
             $name = $id.''.$name_append;
             // $name = $id.'-checkbox'.$name_append;
         }
-        ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $name ?>" type="checkbox" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
+        ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $name ?>" type="checkbox" tabindex="<?php echo $this->tab_index++; ?>" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
         <label for="<?php echo $id.'-'.$count ?>"><?php echo $option['option'] ?></label><?php 
     endforeach;
     $data = $this->after_form_input($id, $data);
@@ -515,7 +544,7 @@ echo "<pre>"; var_dump($data); echo "</pre>";
             <label for="<?php echo $id; ?>" class="control-label <?php echo $data['required']; ?>"><?php echo $data['label']; ?> <span></span></label>
         </div>
         <div class="small-12 medium-9 large-9 columns">
-            <select class="form-control js-form-control" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex=<?php echo $tabIndex; ?> <?php echo $data['required']; ?> <?php echo $multiple; ?>>
+            <select class="form-control js-form-control" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex="<?php echo $this->tab_index++; ?>" <?php echo $data['required']; ?> <?php echo $multiple; ?>>
                 <?php if(!$multiple): ?>
                     <option value="">Please select an option...</option>
                 <?php endif; ?>
