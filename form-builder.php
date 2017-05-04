@@ -62,6 +62,9 @@ add_action( 'wp_enqueue_scripts', array($this, 'enqueue_javascript') );
         }
     }
 
+    public function get_show_mail_receipt() {
+        return $this->show_mail_receipt;
+    }
     public function get_form_inputs() {
         return $this->form_inputs;
     }
@@ -654,9 +657,8 @@ public function html_section_close_side_by_side () {
  */
 public function wp_swift_form_builder_add_admin_menu(  ) { 
 
-    // add_submenu_page( 'tools.php', 'WP Swift: Form Builder', 'WP Swift: Form Builder', 'manage_options', 'wp_swift_form_builder', 'wp_swift_form_builder_options_page' );
-
-    if ( empty ( $GLOBALS['admin_page_hooks']['wp-swift-brightlight-main-menu'] ) ) {
+    $show_form_builder = class_exists('WP_Swift_Admin_Menu');
+    if (!$show_form_builder) {
         $options_page = add_options_page( 
             'Form Builder Configuration',
             'Form Builder',
@@ -664,15 +666,6 @@ public function wp_swift_form_builder_add_admin_menu(  ) {
             'wp-swift-form-builder-settings-menu',
             array($this, 'wp_swift_form_builder_options_page') 
         );  
-    }
-    else {
-        // Create a sub-menu under the top-level menu
-        $options_page = add_submenu_page( 'wp-swift-brightlight-main-menu',
-           'Form Builder Configuration', 
-           'Form Builder',
-           'manage_options', 
-           'wp-swift-form-builder-settings-menu',
-           array($this, 'wp_swift_form_builder_options_page') );       
     }
 
 }
@@ -683,20 +676,20 @@ public function wp_swift_form_builder_add_admin_menu(  ) {
  */
 public function wp_swift_form_builder_settings_init(  ) { 
 
-    register_setting( 'plugin_page', 'wp_swift_form_builder_settings' );
+    register_setting( 'form-builder', 'wp_swift_form_builder_settings' );
 
     add_settings_section(
         'wp_swift_form_builder_plugin_page_section', 
         __( 'Set your preferences for the Form Builder here', 'wp-swift-form-builder' ), 
         array($this, 'wp_swift_form_builder_settings_section_callback'), 
-        'plugin_page'
+        'form-builder'
     );
 
     // add_settings_field( 
     //     'wp_swift_form_builder_text_field_0', 
     //     __( 'Settings field description', 'wp-swift-form-builder' ), 
     //     array($this, 'wp_swift_form_builder_text_field_0_render'), 
-    //     'plugin_page', 
+    //     'form-builder', 
     //     'wp_swift_form_builder_plugin_page_section' 
     // );
 
@@ -704,7 +697,7 @@ public function wp_swift_form_builder_settings_init(  ) {
      'wp_swift_form_builder_checkbox_javascript', 
      __( 'Disable JavaScript', 'wp-swift-form-builder' ), 
      array($this, 'wp_swift_form_builder_checkbox_javascript_render'),  
-     'plugin_page', 
+     'form-builder', 
      'wp_swift_form_builder_plugin_page_section' 
     );
 
@@ -712,7 +705,7 @@ public function wp_swift_form_builder_settings_init(  ) {
      'wp_swift_form_builder_checkbox_css', 
      __( 'Disable CSS', 'wp-swift-form-builder' ), 
      array($this, 'wp_swift_form_builder_checkbox_css_render'),  
-     'plugin_page', 
+     'form-builder', 
      'wp_swift_form_builder_plugin_page_section' 
     );
 
@@ -720,7 +713,7 @@ public function wp_swift_form_builder_settings_init(  ) {
     //  'wp_swift_form_builder_radio_field_2', 
     //  __( 'Settings field description', 'wp-swift-form-builder' ), 
     //  array($this, 'wp_swift_form_builder_radio_field_2_render'),  
-    //  'plugin_page', 
+    //  'form-builder', 
     //  'wp_swift_form_builder_plugin_page_section' 
     // );
 
@@ -728,7 +721,7 @@ public function wp_swift_form_builder_settings_init(  ) {
      'wp_swift_form_builder_select_css_framework', 
      __( 'CSS Framework', 'wp-swift-form-builder' ), 
      array($this, 'wp_swift_form_builder_select_css_framework_render'),  
-     'plugin_page', 
+     'form-builder', 
      'wp_swift_form_builder_plugin_page_section' 
     );
 
@@ -737,118 +730,103 @@ public function wp_swift_form_builder_settings_init(  ) {
 }
 
 
-/*
- *
- */
-public function wp_swift_form_builder_text_field_0_render(  ) { 
+    /*
+     *
+     */
+    public function wp_swift_form_builder_text_field_0_render(  ) { 
 
-    $options = get_option( 'wp_swift_form_builder_settings' );
-    ?>
-    <input type='text' name='wp_swift_form_builder_settings[wp_swift_form_builder_text_field_0]' value='<?php echo $options['wp_swift_form_builder_text_field_0']; ?>'>
-    <?php
-
-}
-
-
-/*
- *
- */
-public function wp_swift_form_builder_checkbox_javascript_render(  ) { 
-
-    $options = get_option( 'wp_swift_form_builder_settings' );
-    ?>
-    <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_javascript]' <?php checked( $options['wp_swift_form_builder_checkbox_javascript'], 1 ); ?> value='1'>
-    <small>You can disable JavaScript here if you prefer to user your own or even not at all.</small>
-    <?php
-
-}
-
-/*
- *
- */
-public function wp_swift_form_builder_checkbox_css_render(  ) { 
-
-    $options = get_option( 'wp_swift_form_builder_settings' );
-    ?>
-    <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_css]' <?php checked( $options['wp_swift_form_builder_checkbox_css'], 1 ); ?> value='1'>
-    <small>Same goes for CSS</small>
-    <?php
-
-}
-
-/*
- *
- */
-public function wp_swift_form_builder_radio_field_2_render(  ) { 
-
-    $options = get_option( 'wp_swift_form_builder_settings' );
-    ?>
-    <input type='radio' name='wp_swift_form_builder_settings[wp_swift_form_builder_radio_field_2]' <?php checked( $options['wp_swift_form_builder_radio_field_2'], 1 ); ?> value='1'>
-    <?php
-
-}
-
-
-/*
- *
- */
-public function wp_swift_form_builder_select_css_framework_render(  ) { 
-
-    $options = get_option( 'wp_swift_form_builder_settings' );
-    ?>
-    <select name='wp_swift_form_builder_settings[wp_swift_form_builder_select_css_framework]'>
-        <option value='zurb' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'zurb' ); ?>>Zurb Foundation</option>
-        <option value='custom' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'custom' ); ?>>None</option>
-    </select>
-
-<?php
-
-}
-
-
-/*
- *
- */
-public function wp_swift_form_builder_settings_section_callback(  ) { 
-
-    echo __( 'This section description', 'wp-swift-form-builder' );
-
-}
-
-
-/*
- *
- */
-public function wp_swift_form_builder_options_page(  ) { 
-// if (isset($_POST)) {
-// echo "<pre>"; var_dump($_POST); echo "</pre>";
-// }
-// if ( get_option( 'wp_swift_google_analytics' )) {
-//     $wp_swift_google_analytics = get_option( 'wp_swift_google_analytics' );
-//     echo "<pre>"; var_dump($wp_swift_google_analytics); echo "</pre>";
-// }
-// if ( get_option( 'wp_swift_form_builder_settings' )) {
-//     $wp_swift_form_builder_settings = get_option( 'wp_swift_form_builder_settings' );
-//     echo "<pre>"; var_dump($wp_swift_form_builder_settings); echo "</pre>";
-// }
-    ?>
-    <div id="form-builder-wrap" class="wrap">
-    <h2>WP Swift: Form Builder</h2>
-
-    <form action='options.php' method='post'>
-
-        
-        <?php
-        settings_fields( 'plugin_page' );
-        do_settings_sections( 'plugin_page' );
-        submit_button();
+        $options = get_option( 'wp_swift_form_builder_settings' );
         ?>
+        <input type='text' name='wp_swift_form_builder_settings[wp_swift_form_builder_text_field_0]' value='<?php echo $options['wp_swift_form_builder_text_field_0']; ?>'>
+        <?php
 
-    </form>
-    </div>
+    }
+
+    /*
+     *
+     */
+    public function wp_swift_form_builder_checkbox_javascript_render(  ) { 
+
+        $options = get_option( 'wp_swift_form_builder_settings' );
+        ?>
+        <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_javascript]' <?php checked( $options['wp_swift_form_builder_checkbox_javascript'], 1 ); ?> value='1'>
+        <small>You can disable JavaScript here if you prefer to user your own or even not at all.</small>
+        <?php
+
+    }
+
+    /*
+     *
+     */
+    public function wp_swift_form_builder_checkbox_css_render(  ) { 
+
+        $options = get_option( 'wp_swift_form_builder_settings' );
+        ?>
+        <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_css]' <?php checked( $options['wp_swift_form_builder_checkbox_css'], 1 ); ?> value='1'>
+        <small>Same goes for CSS</small>
+        <?php
+
+    }
+
+    /*
+     *
+     */
+    public function wp_swift_form_builder_radio_field_2_render(  ) { 
+
+        $options = get_option( 'wp_swift_form_builder_settings' );
+        ?>
+        <input type='radio' name='wp_swift_form_builder_settings[wp_swift_form_builder_radio_field_2]' <?php checked( $options['wp_swift_form_builder_radio_field_2'], 1 ); ?> value='1'>
+        <?php
+
+    }
+
+    /*
+     *
+     */
+    public function wp_swift_form_builder_select_css_framework_render(  ) { 
+
+        $options = get_option( 'wp_swift_form_builder_settings' );
+        ?>
+        <select name='wp_swift_form_builder_settings[wp_swift_form_builder_select_css_framework]'>
+            <option value='zurb' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'zurb' ); ?>>Zurb Foundation</option>
+            <option value='custom' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'custom' ); ?>>None</option>
+        </select>
+
     <?php
 
-}
+    }
+
+    /*
+     *
+     */
+    public function wp_swift_form_builder_settings_section_callback(  ) { 
+
+        echo __( 'This section description', 'wp-swift-form-builder' );
+
+    }
+
+    /*
+     *
+     */
+    public function wp_swift_form_builder_options_page(  ) { 
+        $show_form_builder = class_exists('WP_Swift_Admin_Menu');
+        if (!$show_form_builder): ?>
+            <div id="form-builder-wrap" class="wrap">
+            <h2>WP Swift: Form Builder</h2>
+
+            <form action='options.php' method='post'>
+                
+                <?php
+                settings_fields( 'form-builder' );
+                do_settings_sections( 'form-builder' );
+                submit_button();
+                ?>
+
+            </form>
+            </div>
+        <?php 
+        endif;
+    }
 }
 // Initialize the plugin
 $form_builder_plugin = new WP_Swift_Form_Builder_Plugin();
