@@ -5,8 +5,8 @@ jQuery(document).ready(function($){
 	// $('.js-form-control').blur(function(e){	
 	$('body').on('blur', '.js-form-builder-control', function(e) {	
 		var input = new FormBuilderInput($(this).serializeArray()[0]);
-		// console.log('blur');
-		// console.log(input);
+		console.log('blur');
+		console.log(input);
 		if(!input.isValid()) {
 			
 			// if(input.data_type !=='date_time') {

@@ -400,15 +400,18 @@ private function form_element_help($data) {
  * Get the CSS class for div wrapping the label
  */
 private function get_form_label_div_class() {
-        $framework='zurb';
+    $framework = $this->css_framework;
     $options = get_option( 'wp_swift_form_builder_settings' );
     if (isset($options['wp_swift_form_builder_select_css_framework'])) {
         $framework = $options['wp_swift_form_builder_select_css_framework'];
     }
-    // echo "<pre>"; var_dump($array); echo "</pre>";
-    if ($this->css_framework === "zurb_foundation") {
-        return "small-12 medium-12 large-3 columns ";
+
+    if ($framework === "zurb_foundation") {
+        return $framework." testing small-12 medium-12 large-3 columns ";
     }
+    elseif ($framework === "bootstrap") {
+        return "col-xs-12 col-sm-12 col-md-12 col-lg-3 ";
+    }    
     else {
         return "";
     }
@@ -417,9 +420,18 @@ private function get_form_label_div_class() {
  * Get the CSS class for div wrapping the label
  */
 private function get_form_input_div_class() {
-    if ($this->css_framework === "zurb_foundation") {
+    $framework = $this->css_framework;
+    $options = get_option( 'wp_swift_form_builder_settings' );
+    if (isset($options['wp_swift_form_builder_select_css_framework'])) {
+        $framework = $options['wp_swift_form_builder_select_css_framework'];
+    }
+       
+    if ($framework === "zurb_foundation") {
         return "small-12 medium-12 large-9 columns ";
     }
+    elseif ($framework === "bootstrap") {
+        return "col-xs-12 col-sm-12 col-md-12 col-lg-9 ";
+    }     
     else {
         return "";
     }
@@ -429,7 +441,7 @@ private function get_form_input_div_class() {
  * Get the CSS class for the input
  */
 private function get_form_input_class() {
-    return "form-builder-control js-form-builder-control";
+    return "form-control form-builder-control js-form-builder-control";
 }
 /*
  * Set the CSS framework
@@ -446,7 +458,7 @@ function bld_form_textarea($id, $input) {
     }
 
     $this->before_form_input($id, $input);   
-    ?><textarea class="form-control js-form-control" rows="3" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex="<?php echo $this->tab_index++; ?>" placeholder="<?php echo $input['placeholder']; ?>" <?php echo $input['required']; ?>><?php echo $input['value']; ?></textarea><?php
+    ?><textarea class="form-control js-form-builder-control" rows="3" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex="<?php echo $this->tab_index++; ?>" placeholder="<?php echo $input['placeholder']; ?>" <?php echo $input['required']; ?>><?php echo $input['value']; ?></textarea><?php
     $this->after_form_input($id, $input);
 
 }
@@ -473,8 +485,6 @@ function bldFormSelect($id, $data, $multiple) {
     $this->after_form_input($id, $data);
 }
 function build_form_radio($id, $input) {
-    // echo "<pre>"; var_dump($id); echo "</pre>";
-    // echo "<pre>"; var_dump($input); echo "</pre>";
     if(!$this->form_pristine) {
         if($this->clear_after_submission && $this->error_count===0) {
             // No errors found so clear the selected value
@@ -749,7 +759,12 @@ public function wp_swift_form_builder_settings_init(  ) {
 
         $options = get_option( 'wp_swift_form_builder_settings' );
         ?>
-        <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_javascript]' <?php checked( $options['wp_swift_form_builder_checkbox_javascript'], 1 ); ?> value='1'>
+        <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_javascript]' <?php 
+        // checked( $options['wp_swift_form_builder_checkbox_javascript'], 1 ); 
+        if (isset($options['wp_swift_form_builder_checkbox_javascript'])) {
+             checked( $options['wp_swift_form_builder_checkbox_javascript'], 1 );
+         } 
+        ?> value='1'>
         <small>You can disable JavaScript here if you prefer to user your own or even not at all.</small>
         <?php
 
@@ -762,7 +777,10 @@ public function wp_swift_form_builder_settings_init(  ) {
 
         $options = get_option( 'wp_swift_form_builder_settings' );
         ?>
-        <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_css]' <?php checked( $options['wp_swift_form_builder_checkbox_css'], 1 ); ?> value='1'>
+        <input type='checkbox' name='wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_css]' <?php //checked( $options['wp_swift_form_builder_checkbox_css'], 1 );
+            if (isset($options['wp_swift_form_builder_checkbox_css'])) {
+                checked( $options['wp_swift_form_builder_checkbox_css'], 1 );
+            }  ?> value='1'>
         <small>Same goes for CSS</small>
         <?php
 
@@ -775,7 +793,10 @@ public function wp_swift_form_builder_settings_init(  ) {
 
         $options = get_option( 'wp_swift_form_builder_settings' );
         ?>
-        <input type='radio' name='wp_swift_form_builder_settings[wp_swift_form_builder_radio_field_2]' <?php checked( $options['wp_swift_form_builder_radio_field_2'], 1 ); ?> value='1'>
+        <input type='radio' name='wp_swift_form_builder_settings[wp_swift_form_builder_radio_field_2]' <?php //checked( $options['wp_swift_form_builder_radio_field_2'], 1 );
+        if (isset($options['wp_swift_form_builder_radio_field_2'])) {
+             checked( $options['wp_swift_form_builder_radio_field_2'], 1 );
+         } ?> value='1'>
         <?php
 
     }
@@ -788,7 +809,8 @@ public function wp_swift_form_builder_settings_init(  ) {
         $options = get_option( 'wp_swift_form_builder_settings' );
         ?>
         <select name='wp_swift_form_builder_settings[wp_swift_form_builder_select_css_framework]'>
-            <option value='zurb' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'zurb' ); ?>>Zurb Foundation</option>
+            <option value='zurb_foundation' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'zurb_foundation' ); ?>>Zurb Foundation</option>
+            <option value='bootstrap' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'bootstrap' ); ?>>Bootstrap</option>
             <option value='custom' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'custom' ); ?>>None</option>
         </select>
 
