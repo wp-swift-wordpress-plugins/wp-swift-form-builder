@@ -18,7 +18,7 @@ $this->error_count = 0;
 // $this->form_settings["enctype"] = "";
 // $this->form_settings["form_class"] = "";
 $this->form_settings["option"]=$option;
-if (isset($args["show_mail_receipt"])) {
+if (isset($args["show_mail_receipt"]) && $args["show_mail_receipt"] === true) {
     $this->show_mail_receipt = true;
 }
 // if( function_exists('acf')) {

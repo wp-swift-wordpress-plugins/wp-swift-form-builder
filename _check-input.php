@@ -6,14 +6,14 @@
  * @param $value    the value of the form input
  */
 // public function check_input($key, $value){
-// echo "<pre>";var_dump($key);echo "</pre>";
-// echo "<pre>";var_dump($value);echo "</pre>";
+
 $this->form_inputs[$key]['value'] = $value;
-// $this->form_inputs[$key]['value'] = $value;
+
 if($this->form_inputs[$key]['required'] && $this->form_inputs[$key]['value']=='') {
     $this->increase_error_count();
     return;
 }
+
 else if(!$this->form_inputs[$key]['required'] && $this->form_inputs[$key]['value']=='') {
     $this->form_inputs[$key]['clean'] = $this->form_inputs[$key]['value'];
     $this->form_inputs[$key]['passed'] = true;
@@ -21,15 +21,10 @@ else if(!$this->form_inputs[$key]['required'] && $this->form_inputs[$key]['value
 }
 
 if(!is_array($this->form_inputs[$key]['value'])) {
-    // echo "value <pre>"; var_dump($this->form_inputs[$key]['value']); echo "</pre>";
     $this->form_inputs[$key]['value'] = trim($this->form_inputs[$key]['value']);
-    // $this->form_inputs[$key]['value'] = stripslashes($this->form_inputs[$key]['value']);
-    // $this->form_inputs[$key]['value'] = htmlspecialchars($this->form_inputs[$key]['value']);       
+   
 }
-// elseif(is_array($this->form_inputs[$key]['value'])) {
-//     echo "is_array<pre>"; var_dump($this->form_inputs[$key]['value']); echo "</pre>";
-// }
-// echo "type:<pre>"; var_dump($this->form_inputs[$key]['type']); echo "</pre><br>";
+
 switch ($this->form_inputs[$key]['type']) {
     case "text":
     case "textarea":
@@ -52,6 +47,15 @@ switch ($this->form_inputs[$key]['type']) {
             $this->form_inputs[$key]['clean'] = sanitize_email( $this->form_inputs[$key]['value'] );  
         }
         break;
+    case "number":
+        if ( !is_numeric( $this->form_inputs[$key]['value'] ) ) { 
+            $this->increase_error_count();
+            return $this->form_inputs[$key]; 
+        }
+        else {
+            $this->form_inputs[$key]['clean'] = $this->form_inputs[$key]['value'];  
+        }
+        break;        
     case "url":
         if (filter_var($this->form_inputs[$key]['value'], FILTER_VALIDATE_URL) === false) {
             $this->increase_error_count();
@@ -84,18 +88,20 @@ switch ($this->form_inputs[$key]['type']) {
             }             
         break; 
     case "password":
-            // echo "<pre>"; var_dump($value); echo "</pre>";  
             break; 
     case "checkbox":
-            if(!is_array($this->form_inputs[$key]['value'])) {
-                $this->form_inputs[$key]['selected_option'] = trim($this->form_inputs[$key]['value']);
+            $options = $this->form_inputs[$key]["options"];
+            $clean = '';
+            foreach ($options as $option_key => $option) {
+                if ( in_array($option["option_value"], $value)) {
+                    $options[$option_key]["checked"] = true;
+                    $clean .= $option["option"].', ';
+                }
             }
-            // elseif(is_array($this->form_inputs[$key]['value'])) {
-            //     echo "is_array<pre>"; var_dump($this->form_inputs[$key]['value']); echo "</pre>";
-            // }
+            $clean = rtrim( $clean, ', ');
+            $this->form_inputs[$key]["options"] = $options;
+            $this->form_inputs[$key]['clean'] = $clean;
             break;                          
-    // default: echo "<pre>"; var_dump($value); echo "</pre>";
 }
 // esc_attr() - Escaping for HTML attributes. Encodes the <, >, &, ” and ‘ (less than, greater than, ampersand, double quote and single quote) characters. Will never double encode entities.
-// $this->form_inputs[$key]['clean'] =  esc_attr($this->form_inputs[$key]['value']);
 $this->form_inputs[$key]['passed'] = true;

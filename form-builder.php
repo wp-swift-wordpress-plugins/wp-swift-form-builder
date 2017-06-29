@@ -254,7 +254,7 @@ public function after_form_input($id, $data) {
     public function bld_form_input($id, $data, $section='') {
         // echo "<pre>"; var_dump($data); echo "</pre>";
         $has_error='';
-        // echo "<pre>this->form_pristine: "; var_dump($this->form_pristine); echo "</pre>";
+        // echo "<pre>this->form_pristine: "; var_dump($this->form_pristine); echo "</p ` `re>";
         // echo "<pre>this->clear_after_submission "; var_dump($this->clear_after_submission); echo "</pre>";
         // echo "<pre>this->error_count "; var_dump($this->error_count); echo "</pre>";
         if(!$this->form_pristine) {
@@ -293,7 +293,28 @@ public function after_form_input($id, $data) {
             <?php echo $data['required']; ?>   
         ><?php 
         $data = $this->after_form_input($id, $data);
-    }  
+    } 
+    public function bld_combo_form_input($id, $data, $section='') {
+       
+        if (isset($data['order']) && $data['order'] == 0):
+            
+            $data = $this->form_element_open($id, $data);
+            $this->form_element_anchor($id);
+            $this->form_element_label($id, array('label'=>$data['parent_label'], 'required'=>$data['required']));
+            $this->form_element_form_input_open(); ?>
+            <div class="row <?php echo $data['data_type'] ?>">
+                <div class="small-6 columns">
+                    <div class="input-1"><?php  $this->bld_form_input($id, $data); ?></div>
+                </div>
+            <?php elseif (isset($data['order']) && $data['order'] == 1): ?>
+                <div class="small-6 columns">
+                    <div class="input-2"><?php  $this->bld_form_input($id, $data); ?></div>            
+                </div>
+            </div>
+            <?php $this->after_form_input($id, $data); ?>
+        <?php endif;
+       
+    } 
 
     public function bld_form_hidden_input($id, $data, $tabIndex=0, $section='') {
         // echo "<pre>"; var_dump($data); echo "</pre>";
@@ -367,6 +388,7 @@ private function form_element_anchor($id) {
     ?><a href="<?php echo $id; ?>-anchor"></a><?php
 }
 private function form_element_label($id, $data) {
+    // echo "Required: <pre>".$data['required']."</pre><hr>";
     ?><div class="<?php echo $this->get_form_label_div_class() ?>form-label">
         <?php if ($data['label']!=''): ?>
             <label for="<?php echo $id; ?>" class="control-label <?php echo $data['required']; ?>"><?php echo $data['label']; ?> <span></span></label>
@@ -393,7 +415,9 @@ private function form_element_help($data) {
         }  
         $data['help'] = $help;
     }   
-    ?><small class="error"><?php echo $help; ?></small><?php 
+    if ($data['required']): 
+        ?><small class="error"><?php echo $help; ?></small><?php 
+    endif;
     return $data;
 }
 /*
@@ -407,10 +431,10 @@ private function get_form_label_div_class() {
     }
 
     if ($framework === "zurb_foundation") {
-        return $framework." testing small-12 medium-12 large-3 columns ";
+        return $framework." testing small-12 medium-12 large-12 columns ";
     }
     elseif ($framework === "bootstrap") {
-        return "col-xs-12 col-sm-12 col-md-12 col-lg-3 ";
+        return "col-xs-12 col-sm-12 col-md-12 col-lg-12 ";
     }    
     else {
         return "";
@@ -427,10 +451,10 @@ private function get_form_input_div_class() {
     }
        
     if ($framework === "zurb_foundation") {
-        return "small-12 medium-12 large-9 columns ";
+        return "small-12 medium-12 large-12 columns ";
     }
     elseif ($framework === "bootstrap") {
-        return "col-xs-12 col-sm-12 col-md-12 col-lg-9 ";
+        return "col-xs-12 col-sm-12 col-md-12 col-lg-12 ";
     }     
     else {
         return "";
@@ -464,7 +488,8 @@ function bld_form_textarea($id, $input) {
 }
 
 
-function bldFormSelect($id, $data, $multiple) {
+function bld_form_select($id, $data, $multiple) {
+
     if(!$this->form_pristine) {
         if($this->clear_after_submission && $this->error_count===0) {
             // No errors found so clear the selected value
@@ -473,12 +498,19 @@ function bldFormSelect($id, $data, $multiple) {
     }
 
     $this->before_form_input($id, $data);   
+    // echo "<pre>";var_dump($data['options']);echo "</pre>";
       ?><select class="form-control js-form-control" id="<?php echo $id; ?>" name="<?php echo $id; ?>" tabindex="<?php echo $this->tab_index++; ?>" <?php echo $data['required']; ?> <?php echo $multiple; ?>>
             <?php if(!$multiple): ?>
                 <option value="">Please select an option...</option>
             <?php endif; ?>
             <?php foreach ($data['options'] as $option): ?>
-                <?php if($option['option_value'] == $data['selected_option']){ $selected='selected'; } else { $selected=''; }?>
+                <?php 
+                    if($option['option_value'] === $data['selected_option']) { 
+                        $selected='selected'; 
+                    } else { 
+                        $selected=''; 
+                    }
+                ?>
                 <option value="<?php echo  $option['option_value']; ?>" <?php echo $selected; ?>><?php echo $option['option']; ?></option>
             <?php endforeach; ?>
         </select><?php
@@ -508,21 +540,25 @@ function build_form_radio($id, $input) {
 function build_form_checkbox($id, $data) {
     if(!$this->form_pristine) {
         if($this->clear_after_submission && $this->error_count===0) {
-            // No errors found so clear the selected value
-            $data['selected_option']=''; 
+            // No errors found so clear the checked values
+            foreach ($data['options'] as $key => $option) {
+                $data['options'][$key]['checked'] = false;
+            }
         }
     }
 
     $data = $this->before_form_input($id, $data);
     $count=0;  
-    $checked='';
+    
     $name_append = '';
     if (count($data['options']) > 1) {
         $name_append = '[]';
     }
  
     foreach ($data['options'] as $option): $count++;
-        if ( $option['checked'] ){
+        $checked='';
+        // echo "<br><pre>";var_dump($option);echo "</pre>";
+        if ( $option['checked'] == true ){
             $checked=' checked';
         }
         if (isset($data['name'])) {
@@ -532,15 +568,14 @@ function build_form_checkbox($id, $data) {
             $name = $id.''.$name_append;
             // $name = $id.'-checkbox'.$name_append;
         }
-        ?><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $name ?>" type="checkbox" tabindex="<?php echo $this->tab_index++; ?>" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
-        <label for="<?php echo $id.'-'.$count ?>"><?php echo $option['option'] ?></label><?php 
+        ?><label for="<?php echo $id.'-'.$count ?>" class="lbl-checkbox"><input id="<?php echo $id.'-'.$count ?>" name="<?php echo $name ?>" type="checkbox" tabindex="<?php echo $this->tab_index++; ?>" value="<?php echo $option['option_value'] ?>"<?php echo $checked; ?>>
+        <?php echo $option['option'] ?></label><?php 
     endforeach;
     $data = $this->after_form_input($id, $data);
 }
 
 
 function bld_FormSelect2($id, $data, $form_pristine, $form_num_error_found, $tabIndex, $multiple) {
-echo "<pre>"; var_dump($data); echo "</pre>";
     if(!$form_pristine) {
         if(!$form_num_error_found) {
             // No errors found so clear the selected option
@@ -579,10 +614,10 @@ echo "<pre>"; var_dump($data); echo "</pre>";
         ?>
         <!-- @start section -->
         <?php if ($section_header): ?>
-            <h4><?php echo $section_header ?></h4>
+            <div class="row"><div class="columns"><h4><?php echo $section_header ?></h4></div></div>
         <?php endif ?>
         <?php if ($section_content): ?>
-            <p><?php echo $section_content ?></p>
+            <div class="row"><div class="columns"><p><?php echo $section_content ?></p></div></div>
         <?php endif;    
     }
 

@@ -10,7 +10,7 @@ if ($this->get_error_count()>0): ?>
             if ($this->list_form_errors_in_warning_panel) {
                foreach ($this->form_inputs as $key => $data) {
 
-                    if (!$data["passed"] && $data["type"] != "checkbox") {
+                    if (isset($data["passed"]) && !$data["passed"] && $data["type"] != "checkbox") {
                         if ($data["help"]): 
                         ?>
                             <li><?php echo $data["help"] ?></li>
