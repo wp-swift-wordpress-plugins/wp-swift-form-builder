@@ -68,6 +68,7 @@ switch ($this->form_inputs[$key]['type']) {
     case "select2":
     case "select":
         $this->form_inputs[$key]['selected_option'] = $value;
+        $this->form_inputs[$key]['clean'] = $value;
         break;
     case "file":     
         break; 
