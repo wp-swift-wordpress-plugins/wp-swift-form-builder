@@ -37,7 +37,7 @@ class WP_Swift_Form_Builder_Plugin {
     /*
      * Initializes the plugin.
      */
-    public function __construct($attributes=false, $form_data=false, $post_id=false, $form_builder_args=false, $option=false) { //"option") {
+    public function __construct($attributes=false, $form_data=false, $post_id=false, $form_builder_args=false, $option='') { //"option") {
         
         // echo "<pre>"; var_dump($options); echo "</pre>";
         $this->set_form_data($form_data,  $post_id, $form_builder_args, $attributes, $option);
