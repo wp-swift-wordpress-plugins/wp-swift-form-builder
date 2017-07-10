@@ -2,9 +2,33 @@
 /*
  * acf_build_form()
  */
-if ($this->get_error_count()>0): ?>
+if ($this->get_error_count()>0):
+$framework = $this->css_framework;
+$options = get_option( 'wp_swift_form_builder_settings' );
+if (isset($options['wp_swift_form_builder_select_css_framework'])) {
+    $framework = $options['wp_swift_form_builder_select_css_framework'];
+}
+if ($framework === "zurb_foundation") :
+    ?>
     <div class="callout warning">
-        <h3>Errors Found</h3>
+                <h3>Errors Found</h3>
+    <?php
+elseif ($framework === "bootstrap"):
+    ?>
+    <div class="panel panel-danger">
+      <div class="panel-heading"><h3>Errors Found</h3></div>
+      <div class="panel-body">
+<?php else:?>
+    <h3>Errors Found</h3><?php  
+endif;
+
+
+
+?>
+
+
+    <!-- <div class="callout warning"> -->
+
         <p>We're sorry, there has been an error with the form input. Please rectify the <?php echo $this->get_error_count() ?> errors below and resubmit.</p>
         <ul><?php 
             if ($this->list_form_errors_in_warning_panel) {
@@ -34,9 +58,20 @@ if ($this->get_error_count()>0): ?>
             	}
             } 
          ?></ul>
-    </div>
+    <!-- </div> -->
 
 <?php 
+
+if ($framework === "zurb_foundation") :
+    ?>
+    </div>
+    <?php
+elseif ($framework === "bootstrap"):
+    ?>
+  </div>
+</div>
+    <?php
+endif;
 // endif;
 // $this->success_msg = "Testing";
 
@@ -81,7 +116,7 @@ if (isset($options['wp_swift_form_builder_select_css_framework'])) {
 
     <!-- <div id="form-hide-until-focus"> -->
         <?php if ($this->show_mail_receipt): ?>
-            <div class="row form-builder">
+            <div class="row form-builder mail-receipt">
                 <div class="<?php echo $this->get_form_label_div_class() ?>form-label"></div>
                 <div class="<?php echo $this->get_form_input_div_class() ?>form-input">
                     <div class="checkbox">

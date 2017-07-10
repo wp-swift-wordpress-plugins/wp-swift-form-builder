@@ -7,7 +7,6 @@ Author:            Gary Swift
 License:           GPL-2.0+
 Text Domain:       wp-swift-form-builder
 */
-
 class WP_Swift_Form_Builder_Plugin {
     public $action='';
     // public $form_settings = null;
@@ -411,6 +410,9 @@ class WP_Swift_Form_Builder_Plugin {
         }   
         if ($data['required']): 
             ?><small class="error"><?php echo $help; ?></small><?php 
+        endif;
+        if (isset($data['instructions']) && $data['instructions']): 
+            ?><small class="instructions"><?php echo $data['instructions']; ?></small><?php 
         endif;
         return $data;
     }
