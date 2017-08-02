@@ -439,7 +439,7 @@ class WP_Swift_Form_Builder_Plugin {
         }
 
         if ($framework === "zurb_foundation") {
-            return $framework." small-12 medium-12 large-12 columns ";
+            return $framework."";//" small-12 medium-12 large-12 columns "
         }
         elseif ($framework === "bootstrap") {
             return "col-xs-12 col-sm-12 col-md-12 col-lg-12 ";
@@ -459,7 +459,7 @@ class WP_Swift_Form_Builder_Plugin {
         }
            
         if ($framework === "zurb_foundation") {
-            return " small-12 medium-12 large-12 columns ";
+            return "";//" small-12 medium-12 large-12 columns "
         }
         elseif ($framework === "bootstrap") {
             return "col-xs-12 col-sm-12 col-md-12 col-lg-12 ";

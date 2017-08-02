@@ -223,14 +223,11 @@ class WP_Swift_Form_Builder_Admin_Interface {
 	public function wp_swift_form_builder_select_css_framework_render(  ) { 
 
 	    $options = get_option( 'wp_swift_form_builder_settings' );
-	    ?>
-	    <select name='wp_swift_form_builder_settings[wp_swift_form_builder_select_css_framework]'>
+	    ?><select name='wp_swift_form_builder_settings[wp_swift_form_builder_select_css_framework]'>
 	        <option value='zurb_foundation' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'zurb_foundation' ); ?>>Zurb Foundation</option>
 	        <option value='bootstrap' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'bootstrap' ); ?>>Bootstrap</option>
 	        <option value='custom' <?php selected( $options['wp_swift_form_builder_select_css_framework'], 'custom' ); ?>>None</option>
-	    </select>
-
-	<?php
+	    </select><?php
 
 	}
 
@@ -240,17 +237,13 @@ class WP_Swift_Form_Builder_Admin_Interface {
 	public function wp_swift_form_builder_checkbox_debug_mode_render(  ) { 
 
 	    $options = get_option( 'wp_swift_form_builder_settings' );
-	    echo "<pre>";var_dump($options);echo "</pre>";
-	    ?>
-	    <input type="checkbox" name="wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_debug_mode]" value="1" <?php 
+	    ?><input type="checkbox" name="wp_swift_form_builder_settings[wp_swift_form_builder_checkbox_debug_mode]" value="1" <?php 
 	    	if (isset($options['wp_swift_form_builder_checkbox_debug_mode'])) {
 	         	checked( $options['wp_swift_form_builder_checkbox_debug_mode'], 1 );
 	     	} 
 	    ?>>
 	    <small><b>Do not use on live sites!</b></small><br>
-	    <small>You can set this to debug mode if you are a developer. This will skip default behaviour such as sending emails.</small>
-	    
-	    <?php
+	    <small>You can set this to debug mode if you are a developer. This will skip default behaviour such as sending emails.</small><?php
 
 	}
 
