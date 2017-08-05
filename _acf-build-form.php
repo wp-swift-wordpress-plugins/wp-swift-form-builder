@@ -117,8 +117,8 @@ if (isset($options['wp_swift_form_builder_select_css_framework'])) {
     <!-- <div id="form-hide-until-focus"> -->
         <?php if ($this->show_mail_receipt): ?>
             <div class="row form-builder mail-receipt">
-                <div class="<?php echo $this->get_form_label_div_class() ?>form-label"></div>
-                <div class="<?php echo $this->get_form_input_div_class() ?>form-input">
+                <div class="<?php echo $this->get_form_label_div_class() ?> form-label"></div>
+                <div class="<?php echo $this->get_form_input_div_class() ?> form-input">
                     <div class="checkbox">
                       <input type="checkbox" value="" tabindex=<?php echo $this->tab_index; ?> name="mail-receipt" id="mail-receipt"><label for="mail-receipt">Acknowledge me with a mail receipt</label>
                     </div>
@@ -135,8 +135,8 @@ if (isset($options['wp_swift_form_builder_select_css_framework'])) {
        <?php endif ?>
 
     <div class="row form-builder">
-        <div class="<?php echo $this->get_form_label_div_class() ?>form-label"></div>
-        <div class="<?php echo $this->get_form_input_div_class() ?>form-input">
+        <div class="<?php echo $this->get_form_label_div_class() ?> form-label"></div>
+        <div class="<?php echo $this->get_form_input_div_class() ?> form-input">
             <button type="submit" name="<?php echo $this->submit_button_name; ?>" id="<?php echo $this->submit_button_id; ?>" class="button large" tabindex="<?php echo $this->tab_index++; ?>"><?php echo $this->submit_button_text; ?></button>
         </div>
     </div>

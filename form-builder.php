@@ -394,7 +394,7 @@ class WP_Swift_Form_Builder_Plugin {
     }
     private function form_element_label($id, $data) {
         // echo "Required: <pre>".$data['required']."</pre><hr>";
-        ?><div class="<?php echo $this->get_form_label_div_class() ?>form-label">
+        ?><div class="<?php echo $this->get_form_label_div_class() ?> form-label">
             <?php if ($data['label']!=''): ?>
                 <label for="<?php echo $id; ?>" class="control-label <?php echo $data['required']; ?>"><?php echo $data['label']; ?> <span></span></label>
             <?php endif ?>
@@ -404,7 +404,7 @@ class WP_Swift_Form_Builder_Plugin {
         ?></div><!-- @end form element --><?php 
     }
     private function form_element_form_input_open() {
-        ?><div class="<?php echo $this->get_form_input_div_class() ?>form-input"><?php /*small-12 medium-9 large-9 columns*/
+        ?><div class="<?php echo $this->get_form_input_div_class() ?> form-input"><?php /*small-12 medium-9 large-9 columns*/
     }
     private function form_element_form_input_close() {
         ?></div><?php 
